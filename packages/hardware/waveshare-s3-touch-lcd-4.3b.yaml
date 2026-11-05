@@ -1,0 +1,102 @@
+#############################################################
+#  HARDWARE: Waveshare ESP32-S3-Touch-LCD-4.3B (SKU 27848)
+#
+#  - ESP32-S3-WROOM-1-N16R8 (16 MB flash, 8 MB octal PSRAM)
+#  - 4.3" 800x480 16-bit RGB panel -> display: mipi_rgb, ESPHome's
+#    built-in ESP32-S3-TOUCH-LCD-4.3 model (same pins and timing)
+#  - GT911 capacitive touch (I2C, INT=GPIO4, RST=CH422G EXIO1)
+#  - CH422G IO expander: EXIO1 touch reset, EXIO2 DISP (backlight),
+#    EXIO3 LCD reset, EXIO4 SD CS, EXIO0/EXIO5 = isolated DI0/DI1,
+#    OD0/OD1 = isolated DO0/DO1
+#  - Same I2C terminal as the 5": GPIO8 (SDA) / GPIO9 (SCL)
+#
+#  Differences from waveshare-s3-touch-lcd-5.yaml:
+#   * RGB timing: the 4.3B panel does not accept the 5"/4.3 timing in
+#     ESPHome's model (it shows its self-test: full-screen colours cycling
+#     every second). The values below are from Waveshare's 4.3B demo code.
+#   * the panel is physically smaller but has the same 800x480 pixels,
+#     so layout-800x480.yaml and every room page work unchanged
+#
+#  NOTE: Backlight is ON/OFF only (CH422G EXIO2 "DISP"), no PWM.
+#############################################################
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  flash_size: 16MB
+  cpu_frequency: 240MHz
+  framework:
+    type: esp-idf
+    advanced:
+      # Keeps the RGB panel from tearing/flickering while flash is busy (OTA, NVS writes)
+      execute_from_psram: true
+      # Boot log: "Set flash_chip: gd ... to save IRAM"
+      flash_chip: gd
+    sdkconfig_options:
+      CONFIG_ESP32S3_DATA_CACHE_64KB: y
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: y
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+i2c:
+  - id: bus_a
+    sda: GPIO8
+    scl: GPIO9
+    scan: true
+    frequency: 400kHz
+
+ch422g:
+  - id: ch422g_hub
+    i2c_id: bus_a
+
+display:
+  - platform: mipi_rgb
+    id: main_display
+    model: ${lcd_model}
+    update_interval: never
+    auto_clear_enabled: false
+    # 4.3B panel timing (overrides the model's 5"/4.3 values)
+    pclk_frequency: 16MHz
+    hsync_pulse_width: 4
+    hsync_back_porch: 8
+    hsync_front_porch: 8
+    vsync_pulse_width: 4
+    vsync_back_porch: 8
+    vsync_front_porch: 8
+    # Override the model's enable pin so the backlight can ALSO be driven by
+    # the "Screen" light below (allow_other_uses).
+    enable_pin:
+      ch422g: ch422g_hub
+      number: 2
+      allow_other_uses: true
+
+touchscreen:
+  - platform: gt911
+    id: main_touch
+    display: main_display
+    i2c_id: bus_a
+    interrupt_pin: GPIO4
+    reset_pin:
+      ch422g: ch422g_hub
+      number: 1
+    on_touch:
+      # Any touch counts as "interaction" for the presence state machine
+      - script.execute: homeview_user_activity
+
+output:
+  - platform: gpio
+    id: backlight_output
+    pin:
+      ch422g: ch422g_hub
+      number: 2
+      allow_other_uses: true
+
+light:
+  - platform: binary
+    id: screen_backlight
+    name: "Skærm"
+    icon: mdi:monitor
+    output: backlight_output
+    restore_mode: ALWAYS_ON

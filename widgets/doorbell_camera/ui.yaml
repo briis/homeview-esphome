@@ -1,0 +1,85 @@
+# ---------------------------------------------------------------
+#  Widget: Doorbell camera tile (Apple Home camera tile style)
+#  The snapshot fills the tile; the name sits bottom-left and a
+#  "LIVE" badge top-left turns red ("RINGER") when someone rings.
+#  Tap to open the full-screen view.
+#  vars: uid, x, y, width, height, title
+#    width x height should match small_w x small_h in data.yaml
+#  Pair with widgets/doorbell_camera/data.yaml + overlay.yaml (same uid).
+# ---------------------------------------------------------------
+obj:
+  id: ${uid}
+  x: ${x}
+  y: ${y}
+  width: ${width}
+  height: ${height}
+  styles: hv_platter
+  pad_all: 0
+  clip_corner: true
+  scrollable: false
+  pressed:
+    transform_width: -4
+    transform_height: -4
+  on_click:
+    - script.execute:
+        id: ${uid}_open
+        ringing: false
+  widgets:
+    - label:
+        id: ${uid}_placeholder
+        align: CENTER
+        text: "\U000F0869"
+        text_font: hv_icons_lg
+        text_color: 0x48484A
+    - image:
+        id: ${uid}_img
+        align: CENTER
+        src: ${uid}_small_img
+        hidden: true
+        clickable: false
+    # LIVE / RINGER badge
+    - obj:
+        id: ${uid}_badge
+        x: 12
+        y: 12
+        width: SIZE_CONTENT
+        height: SIZE_CONTENT
+        radius: 8
+        bg_color: 0x48484A
+        bg_opa: 85%
+        pad_left: 8
+        pad_right: 8
+        pad_top: 3
+        pad_bottom: 3
+        clickable: false
+        scrollable: false
+        widgets:
+          - label:
+              id: ${uid}_badge_text
+              text: "LIVE"
+              styles: hv_caption
+              text_color: 0xFFFFFF
+    # Name
+    - obj:
+        align: BOTTOM_LEFT
+        x: 12
+        y: -12
+        width: SIZE_CONTENT
+        height: SIZE_CONTENT
+        styles: hv_chip
+        bg_opa: 85%
+        clickable: false
+        scrollable: false
+        layout:
+          type: FLEX
+          flex_flow: ROW
+          flex_align_cross: CENTER
+          pad_column: 6
+        widgets:
+          - label:
+              text: "\U000F12E6"
+              text_font: hv_icons_sm
+              text_color: ${c_label}
+          - label:
+              text: "${title}"
+              text_font: hv_font_footnote

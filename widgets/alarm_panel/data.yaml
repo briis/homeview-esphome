@@ -1,0 +1,275 @@
+# ---------------------------------------------------------------
+#  Widget data: Alarm panel (status + arm freely + PIN to disarm)
+#  vars: uid, entity, script, failures_entity, lockout_entity,
+#        exit_seconds, max_attempts
+#    entity          alarm_control_panel.*
+#    script          HA script that does the work (homeassistant/homeview_bryggers.yaml)
+#    failures_entity counter.*  wrong-PIN counter kept by the HA script
+#    lockout_entity  timer.*    runs while the keypad is locked out
+#
+#  Security model:
+#   - The display never knows the PIN. It sends what was typed to the HA
+#     script, which compares it to a value in HA's secrets.yaml, counts
+#     wrong attempts and locks out for a while after max_attempts.
+#   - Arming needs no PIN, only a confirmation dialog (confirm.yaml).
+#     Disarming always needs the PIN (keypad.yaml).
+#   - The keypad opens by itself during the entry delay (pending) and
+#     when the alarm is triggered.
+#  Pair with widgets/alarm_panel/ui.yaml + keypad.yaml + confirm.yaml (same uid).
+# ---------------------------------------------------------------
+globals:
+  - id: ${uid}_pin
+    type: std::string
+  - id: ${uid}_kp_open
+    type: bool
+    initial_value: "false"
+  # millis() when a PIN was sent (0 = no answer pending)
+  - id: ${uid}_sent_at
+    type: uint32_t
+    initial_value: "0"
+  - id: ${uid}_arming_since
+    type: uint32_t
+    initial_value: "0"
+  - id: ${uid}_locked
+    type: bool
+    initial_value: "false"
+  # arm command waiting for confirmation, and when the dialog opened
+  - id: ${uid}_confirm_cmd
+    type: std::string
+  - id: ${uid}_confirm_at
+    type: uint32_t
+    initial_value: "0"
+
+text_sensor:
+  - platform: homeassistant
+    id: ${uid}_state_ha
+    entity_id: ${entity}
+    internal: true
+    on_value:
+      - script.execute:
+          id: ${uid}_render
+          state: !lambda 'return x;'
+
+  - platform: homeassistant
+    id: ${uid}_fail_ha
+    entity_id: ${failures_entity}
+    internal: true
+    on_value:
+      - lambda: |-
+          int n = atoi(x.c_str());
+          if (!id(${uid}_kp_open) || n <= 0 || id(${uid}_locked)) return;
+          id(${uid}_sent_at) = 0;
+          std::string msg = "Forkert kode (" + to_string(n) + " af ${max_attempts})";
+          lv_label_set_text(id(${uid}_kp_msg), msg.c_str());
+          lv_obj_set_style_text_color(id(${uid}_kp_msg), lv_color_hex(${c_red}), LV_PART_MAIN);
+
+  - platform: homeassistant
+    id: ${uid}_lock_ha
+    entity_id: ${lockout_entity}
+    internal: true
+    on_value:
+      - lambda: |-
+          auto set_keys = [](lv_obj_t *parent, bool off) {   // LVGL states don't propagate to children
+            for (uint32_t i = 0; i < lv_obj_get_child_count(parent); i++) {
+              lv_obj_t *c = lv_obj_get_child(parent, i);
+              if (off) lv_obj_add_state(c, LV_STATE_DISABLED); else lv_obj_clear_state(c, LV_STATE_DISABLED);
+            }
+          };
+          id(${uid}_locked) = (x == "active");
+          if (id(${uid}_locked)) {
+            id(${uid}_sent_at) = 0;
+            id(${uid}_pin).clear();
+            lv_label_set_text(id(${uid}_kp_dots), "");
+            lv_label_set_text(id(${uid}_kp_msg), "For mange forkerte koder.\nPrøv igen om lidt.");
+            lv_obj_set_style_text_color(id(${uid}_kp_msg), lv_color_hex(${c_red}), LV_PART_MAIN);
+            set_keys(id(${uid}_kp_keys), true);
+          } else {
+            set_keys(id(${uid}_kp_keys), false);
+            lv_label_set_text(id(${uid}_kp_msg), "Indtast kode");
+            lv_obj_set_style_text_color(id(${uid}_kp_msg), lv_color_hex(${c_label_2}), LV_PART_MAIN);
+          }
+
+script:
+  - id: ${uid}_render
+    parameters:
+      state: std::string
+    then:
+      - lambda: |-
+          auto set_keys = [](lv_obj_t *parent, bool off) {   // LVGL states don't propagate to children
+            for (uint32_t i = 0; i < lv_obj_get_child_count(parent); i++) {
+              lv_obj_t *c = lv_obj_get_child(parent, i);
+              if (off) lv_obj_add_state(c, LV_STATE_DISABLED); else lv_obj_clear_state(c, LV_STATE_DISABLED);
+            }
+          };
+          struct Look { const char *icon; uint32_t color; const char *title; const char *sub; bool armed; };
+          Look l;
+          if      (state == "disarmed")    l = {"\U000F099C", ${c_green},  "Frakoblet",    "Huset er ikke sikret", false};
+          else if (state == "armed_home")  l = {"\U000F068A", ${c_blue},   "Hjemme",       "Skalsikring er slået til", true};
+          else if (state == "armed_night") l = {"\U000F1828", ${c_indigo}, "Nat",          "Nattilstand er slået til", true};
+          else if (state == "armed_away" || state == "armed_vacation" || state == "armed_custom_bypass")
+                                           l = {"\U000F099D", ${c_orange}, "Tilkoblet",    "Hele huset er sikret", true};
+          else if (state == "arming")      l = {"\U000F051F", ${c_orange}, "Tilkobler",    "", true};
+          else if (state == "disarming")   l = {"\U000F051F", ${c_green},  "Frakobler",    "", true};
+          else if (state == "pending")     l = {"\U000F0ECC", ${c_orange}, "Indtast kode", "Alarmen går om lidt", true};
+          else if (state == "triggered")   l = {"\U000F0ECC", ${c_red},    "ALARM",        "Alarmen er udløst", true};
+          else                             l = {"\U000F0499", 0x8E8E93,    "Ukendt",       "Ikke tilgængelig", false};
+          lv_label_set_text(id(${uid}_icon), l.icon);
+          lv_obj_set_style_text_color(id(${uid}_icon), lv_color_hex(l.color), LV_PART_MAIN);
+          lv_obj_set_style_bg_color(id(${uid}_badge), lv_color_hex(l.color), LV_PART_MAIN);
+          lv_label_set_text(id(${uid}_title), l.title);
+          lv_obj_set_style_text_color(id(${uid}_title),
+              lv_color_hex(state == "triggered" ? ${c_red} : ${c_label}), LV_PART_MAIN);
+          lv_label_set_text(id(${uid}_sub), l.sub);
+          id(${uid}_arming_since) = (state == "arming") ? millis() : 0;
+          const bool avail = !(state == "unavailable" || state == "unknown" || state.empty());
+          // disarmed -> arm buttons; anything armed -> "Frakobl"
+          if (l.armed) {
+            lv_obj_add_flag(id(${uid}_arm_row), LV_OBJ_FLAG_HIDDEN);
+            lv_obj_clear_flag(id(${uid}_disarm_btn), LV_OBJ_FLAG_HIDDEN);
+          } else {
+            lv_obj_clear_flag(id(${uid}_arm_row), LV_OBJ_FLAG_HIDDEN);
+            lv_obj_add_flag(id(${uid}_disarm_btn), LV_OBJ_FLAG_HIDDEN);
+          }
+          set_keys(id(${uid}_arm_row), !avail);
+          lv_obj_set_style_opa(id(${uid}_arm_row), avail ? LV_OPA_COVER : LV_OPA_50, LV_PART_MAIN);
+      # Entry delay / triggered: wake the screen and ask for the PIN
+      - if:
+          condition:
+            lambda: 'return (state == "pending" || state == "triggered") && !id(${uid}_kp_open);'
+          then:
+            - script.execute: ${uid}_kp_show
+      # Disarmed while the keypad is open: success
+      - if:
+          condition:
+            lambda: 'return state == "disarmed" && id(${uid}_kp_open);'
+          then:
+            - script.execute: ${uid}_kp_hide
+
+  # command: arm_home | arm_night | arm_away   (no PIN needed)
+  - id: ${uid}_arm
+    parameters:
+      command: std::string
+    then:
+      - script.execute: homeview_user_activity
+      - lambda: |-
+          lv_label_set_text(id(${uid}_title), "Tilkobler");
+          lv_label_set_text(id(${uid}_sub), "Sender til alarmen…");
+      - homeassistant.action:
+          action: ${script}
+          data:
+            command: !lambda 'return command;'
+
+  # Ask before arming. command: arm_night | arm_away
+  - id: ${uid}_confirm
+    parameters:
+      command: std::string
+    then:
+      - script.execute: homeview_user_activity
+      - lambda: |-
+          id(${uid}_confirm_cmd) = command;
+          id(${uid}_confirm_at) = millis();
+          const bool night = (command == "arm_night");
+          lv_label_set_text(id(${uid}_cf_icon), night ? "\U000F1828" : "\U000F099D");
+          lv_obj_set_style_text_color(id(${uid}_cf_icon), lv_color_hex(night ? ${c_indigo} : ${c_orange}), LV_PART_MAIN);
+          lv_label_set_text(id(${uid}_cf_title), night ? "Tilkobl nattilstand?" : "Tilkobl alarmen?");
+          lv_label_set_text(id(${uid}_cf_sub), night
+              ? "Alarmen slås til i nattilstand."
+              : "Hele huset sikres. Du har ${exit_seconds} sekunder til at gå ud.");
+          lv_obj_clear_flag(id(${uid}_confirm_dlg), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_move_foreground(id(${uid}_confirm_dlg));
+
+  - id: ${uid}_confirm_yes
+    then:
+      - lambda: |-
+          id(${uid}_confirm_at) = 0;
+          lv_obj_add_flag(id(${uid}_confirm_dlg), LV_OBJ_FLAG_HIDDEN);
+      - script.execute:
+          id: ${uid}_arm
+          command: !lambda 'return id(${uid}_confirm_cmd);'
+
+  - id: ${uid}_confirm_no
+    then:
+      - lambda: |-
+          id(${uid}_confirm_at) = 0;
+          id(${uid}_confirm_cmd).clear();
+          lv_obj_add_flag(id(${uid}_confirm_dlg), LV_OBJ_FLAG_HIDDEN);
+      - script.execute: homeview_user_activity
+
+  - id: ${uid}_kp_show
+    then:
+      - script.execute: homeview_user_activity
+      - lambda: |-
+          id(${uid}_kp_open) = true;
+          id(${uid}_pin).clear();
+          id(${uid}_sent_at) = 0;
+          lv_label_set_text(id(${uid}_kp_dots), "");
+          if (!id(${uid}_locked)) {
+            lv_label_set_text(id(${uid}_kp_msg), "Indtast kode");
+            lv_obj_set_style_text_color(id(${uid}_kp_msg), lv_color_hex(${c_label_2}), LV_PART_MAIN);
+          }
+          lv_obj_clear_flag(id(${uid}_keypad), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_move_foreground(id(${uid}_keypad));
+
+  - id: ${uid}_kp_hide
+    then:
+      - lambda: |-
+          id(${uid}_kp_open) = false;
+          id(${uid}_pin).clear();
+          id(${uid}_sent_at) = 0;
+          lv_label_set_text(id(${uid}_kp_dots), "");
+          lv_obj_add_flag(id(${uid}_keypad), LV_OBJ_FLAG_HIDDEN);
+      - script.execute: homeview_user_activity
+
+  # key: "0".."9", "del", "ok"
+  - id: ${uid}_key
+    parameters:
+      key: std::string
+    then:
+      - script.execute: homeview_user_activity
+      - if:
+          condition:
+            lambda: 'return key == "ok" && id(${uid}_pin).size() >= 4 && !id(${uid}_locked);'
+          then:
+            - homeassistant.action:
+                action: ${script}
+                data:
+                  command: disarm
+                  pin: !lambda 'return id(${uid}_pin);'
+            - lambda: |-
+                id(${uid}_pin).clear();
+                id(${uid}_sent_at) = millis();
+                lv_label_set_text(id(${uid}_kp_dots), "");
+                lv_label_set_text(id(${uid}_kp_msg), "Kontrollerer…");
+                lv_obj_set_style_text_color(id(${uid}_kp_msg), lv_color_hex(${c_label_2}), LV_PART_MAIN);
+          else:
+            - lambda: |-
+                auto &pin = id(${uid}_pin);
+                if (key == "del") { if (!pin.empty()) pin.pop_back(); }
+                else if (key != "ok" && pin.size() < 8) pin += key;
+                std::string dots;
+                for (size_t i = 0; i < pin.size(); i++) dots += (i ? " •" : "•");
+                lv_label_set_text(id(${uid}_kp_dots), dots.c_str());
+
+interval:
+  - interval: 1s
+    then:
+      - lambda: |-
+          const uint32_t now = millis();
+          // exit-delay countdown
+          if (id(${uid}_arming_since) != 0) {
+            int left = ${exit_seconds} - (int) ((now - id(${uid}_arming_since)) / 1000);
+            std::string s = left > 0 ? ("Tilkoblet om " + to_string(left) + " s") : std::string("Tilkobler…");
+            lv_label_set_text(id(${uid}_sub), s.c_str());
+          }
+          // no answer from HA to a PIN
+          if (id(${uid}_sent_at) != 0 && now - id(${uid}_sent_at) > 8000) {
+            id(${uid}_sent_at) = 0;
+            lv_label_set_text(id(${uid}_kp_msg), "Intet svar fra Home Assistant");
+            lv_obj_set_style_text_color(id(${uid}_kp_msg), lv_color_hex(${c_orange}), LV_PART_MAIN);
+          }
+          // keep the screen awake while the keypad is open
+          if (id(${uid}_kp_open)) id(hv_last_activity) = now;
+          // nobody answered the confirmation: cancel it
+          if (id(${uid}_confirm_at) != 0 && now - id(${uid}_confirm_at) > 20000) {
+            id(${uid}_confirm_no)->execute();
+          }

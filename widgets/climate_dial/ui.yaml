@@ -1,0 +1,162 @@
+# ---------------------------------------------------------------
+#  Widget: Climate dial (Apple Home thermostat style)
+#  Drag the arc or tap −/+ (0.5° steps). Shows current temperature,
+#  heating state and a preset toggle.
+#  vars: uid, x, y, width, height, title, min_half, max_half,
+#        preset_on_label, preset_off_label
+#    min_half/max_half = limits in HALF degrees (e.g. 30/60 = 15-30 °C)
+#  Pair with widgets/climate_dial/data.yaml (same uid).
+# ---------------------------------------------------------------
+obj:
+  id: ${uid}
+  x: ${x}
+  y: ${y}
+  width: ${width}
+  height: ${height}
+  styles: hv_platter
+  scrollable: false
+  clickable: false
+  widgets:
+    # ---------- Dial ----------
+    - arc:
+        id: ${uid}_arc
+        align: LEFT_MID
+        width: 180
+        height: 180
+        rotation: 135
+        start_angle: 0
+        end_angle: 270
+        min_value: ${min_half}
+        max_value: ${max_half}
+        value: ${min_half}
+        adjustable: true
+        arc_width: 14
+        arc_color: ${c_platter_2}
+        arc_opa: COVER
+        indicator:
+          arc_width: 14
+          arc_color: ${c_orange}
+          arc_rounded: true
+        knob:
+          bg_color: 0xFFFFFF
+          pad_all: 5
+        on_value:
+          - lvgl.label.update:
+              id: ${uid}_target
+              text: !lambda 'return hv::fmt_da(x / 2.0f, 1) + "°";'
+        on_release:
+          - script.execute:
+              id: ${uid}_set_target
+              half: !lambda 'return x;'
+        widgets:
+          - label:
+              align: CENTER
+              y: -28
+              text: "MÅL"
+              styles: hv_caption
+          - label:
+              id: ${uid}_target
+              align: CENTER
+              y: 6
+              text: "--°"
+              text_font: hv_font_l
+          - label:
+              id: ${uid}_current
+              align: CENTER
+              y: 44
+              text: ""
+              text_font: hv_font_footnote
+              text_color: ${c_label_2}
+
+    # ---------- Right column ----------
+    - obj:
+        align: RIGHT_MID
+        width: 132
+        height: 100%
+        clickable: false
+        scrollable: false
+        layout:
+          type: FLEX
+          flex_flow: COLUMN
+          flex_align_main: SPACE_BETWEEN
+          pad_row: 6
+        widgets:
+          - label:
+              text: "${title}"
+              text_font: hv_font_title
+          - obj:
+              width: 100%
+              height: SIZE_CONTENT
+              clickable: false
+              scrollable: false
+              layout:
+                type: FLEX
+                flex_flow: ROW
+                flex_align_cross: CENTER
+                pad_column: 4
+              widgets:
+                - label:
+                    id: ${uid}_action_icon
+                    text: "\U000F0238"
+                    text_font: hv_icons_sm
+                    text_color: ${c_label_3}
+                - label:
+                    id: ${uid}_action
+                    text: ""
+                    text_font: hv_font_footnote
+                    text_color: ${c_label_2}
+          - obj:
+              width: 100%
+              height: SIZE_CONTENT
+              clickable: false
+              scrollable: false
+              layout:
+                type: FLEX
+                flex_flow: ROW
+                flex_align_main: SPACE_BETWEEN
+              widgets:
+                - button:
+                    width: 58
+                    height: 52
+                    radius: 26
+                    bg_color: ${c_platter_2}
+                    bg_opa: COVER
+                    pressed:
+                      bg_color: 0x48484A
+                    on_click:
+                      - script.execute:
+                          id: ${uid}_step
+                          delta: -1
+                    widgets:
+                      - label: { align: CENTER, text: "\U000F0374", text_font: hv_icons_md }
+                - button:
+                    width: 58
+                    height: 52
+                    radius: 26
+                    bg_color: ${c_platter_2}
+                    bg_opa: COVER
+                    pressed:
+                      bg_color: 0x48484A
+                    on_click:
+                      - script.execute:
+                          id: ${uid}_step
+                          delta: 1
+                    widgets:
+                      - label: { align: CENTER, text: "\U000F0415", text_font: hv_icons_md }
+          - button:
+              id: ${uid}_preset
+              width: 100%
+              height: 40
+              radius: 20
+              bg_color: ${c_platter_2}
+              bg_opa: COVER
+              checked:
+                bg_color: 0x4A3000
+              on_click:
+                - script.execute: ${uid}_toggle_preset
+              widgets:
+                - label:
+                    id: ${uid}_preset_label
+                    align: CENTER
+                    text: "${preset_off_label}"
+                    text_font: hv_font_footnote

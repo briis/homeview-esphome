@@ -1,0 +1,176 @@
+#############################################################
+#  HomeView desktop preview (ESPHome "host" platform + SDL window)
+#  Renders the exact same theme/pages/widgets on your Mac/PC.
+#    esphome run preview-host.yaml
+#  Needs SDL2 (brew install sdl2). Demo data is injected on boot.
+#############################################################
+substitutions:
+  device_name: homeview-preview
+  location_name: "Roskilde"
+  weather_entity: weather.demo
+  weather_high_entity: sensor.demo_high
+  weather_low_entity: sensor.demo_low
+  event_entity: sensor.demo_event
+  price_entity: sensor.demo_price
+  price_level_entity: sensor.demo_price_level
+  price_cheapest_entity: sensor.demo_price_cheapest
+  face_value1_entity: sensor.demo_indoor
+  face_value1_label: "INDE"
+  face_value1_icon: "\U000F050F"
+  face_value1_color: "0xFF9F0A"
+  face_value1_decimals: "1"
+  face_value1_unit: "°"
+  face_value2_entity: sensor.demo_price
+  face_value2_label: "ELPRIS"
+  face_value2_icon: "\U000F0241"
+  face_value2_color: "0xFFD60A"
+  face_value2_decimals: "2"
+  face_value2_unit: " kr"
+  home_title: "Hjem"
+  chip_climate_entity: sensor.demo_chip1
+  chip_lights_entity: sensor.demo_chip2
+  chip_locks_entity: sensor.demo_chip3
+  tile1_entity: light.demo1
+  tile1_name: "Loftslys Stue"
+  tile1_icon: "\U000F0769"
+  tile1_color: "0xFFB300"
+  tile1_action: light.toggle
+  tile2_entity: light.demo2
+  tile2_name: "Gulvlamper"
+  tile2_icon: "\U000F08DD"
+  tile2_color: "0xFFB300"
+  tile2_action: light.toggle
+  tile3_entity: light.demo3
+  tile3_name: "Spisebord"
+  tile3_icon: "\U000F0335"
+  tile3_color: "0xFFB300"
+  tile3_action: light.toggle
+  tile4_entity: light.demo4
+  tile4_name: "Køkkenvask"
+  tile4_icon: "\U000F0335"
+  tile4_color: "0xFFB300"
+  tile4_action: light.toggle
+  tile5_entity: light.demo5
+  tile5_name: "Panelvæg"
+  tile5_icon: "\U000F1051"
+  tile5_color: "0xFFB300"
+  tile5_action: light.toggle
+  lock1_entity: lock.demo
+  lock1_name: "Fordør"
+  # Which screen to show 3 s after boot: face | home | night
+  preview_screen: face
+  preview_stack_card: "0"
+
+esphome:
+  name: ${device_name}
+  # Only needed where the PlatformIO registry is unreachable; harmless otherwise
+  libraries:
+    - "lvgl/lvgl=https://github.com/lvgl/lvgl.git#v9.5.0"
+  on_boot:
+    priority: -100
+    then:
+      - delay: 500ms
+      - lambda: |-
+          id(face_weather_cond_ha).publish_state("partlycloudy");
+          id(face_weather_temp_ha).publish_state(6.3);
+          id(face_weather_high_ha).publish_state(9);
+          id(face_weather_low_ha).publish_state(4);
+          id(stack_w_cond_ha).publish_state("partlycloudy");
+          id(stack_w_temp_ha).publish_state(6.3);
+          id(stack_w_high_ha).publish_state(9);
+          id(stack_w_low_ha).publish_state(4);
+          id(stack_w_hum_ha).publish_state(87);
+          id(stack_w_wind_ha).publish_state(3.4);
+          id(face_event_title_ha).publish_state("Tandlæge – Dr. Holm");
+          id(face_event_when_ha).publish_state("I DAG · 14:00");
+          id(stack_c_agenda_ha).publish_state("I dag 14:00  Tandlæge\nI dag 17:30  Fodbold Karoline\nI morgen hele dagen  Papiraffald\nTor 09:00  Service på bilen");
+          id(stack_e_level_ha).publish_state("mid");
+          id(stack_e_cheapest_ha).publish_state("Billigst kl. 23 · 2,78 kr");
+          id(stack_e_price_ha).publish_state(3.12);
+          id(face_value1_ha).publish_state(21.6);
+          id(face_value2_ha).publish_state(3.12);
+          id(chip_climate_ha).publish_state("21,6° inde");
+          id(chip_lights_ha).publish_state("3 lys tændt");
+          id(chip_locks_ha).publish_state("1 ulåst");
+          id(tile1_ha).publish_state("on");
+          id(tile2_ha).publish_state("off");
+          id(tile3_ha).publish_state("on");
+          id(tile4_ha).publish_state("off");
+          id(tile5_ha).publish_state("on");
+          id(lock1_ha).publish_state("locked");
+      - delay: 2500ms
+      - if:
+          condition:
+            lambda: 'return std::string("${preview_screen}") == "home";'
+          then:
+            - lvgl.page.show: home_page
+            - script.execute:
+                id: stack_step
+                delta: 0
+            - script.execute:
+                id: stack_show
+                idx: ${preview_stack_card}
+      - if:
+          condition:
+            lambda: 'return std::string("${preview_screen}") == "night";'
+          then:
+            - switch.turn_on: hv_sw_night
+
+host:
+
+logger:
+  level: INFO
+
+api:
+
+time:
+  - platform: host
+    id: hv_time
+    timezone: Europe/Copenhagen
+
+display:
+  - platform: sdl
+    id: main_display
+    dimensions:
+      width: 800
+      height: 480
+    update_interval: never
+    auto_clear_enabled: false
+
+touchscreen:
+  - platform: sdl
+    id: main_touch
+    display: main_display
+
+output:
+  - platform: template
+    id: backlight_output
+    type: binary
+    write_action:
+      - logger.log: "backlight"
+
+light:
+  - platform: binary
+    id: screen_backlight
+    name: "Skærm"
+    output: backlight_output
+    restore_mode: ALWAYS_ON
+
+binary_sensor:
+  - platform: template
+    id: hv_proximity
+    name: "Nærhed"
+    lambda: "return false;"
+
+packages:
+  layout: !include packages/hardware/layout-800x480.yaml
+  theme: !include packages/core/theme.yaml
+  presence: !include packages/core/presence.yaml
+  face: !include packages/pages/face.yaml
+  home: !include packages/pages/home.yaml
+
+# referenced by the top-layer banner in theme
+script:
+  - id: homeview_refresh_all
+    then:
+      - lvgl.widget.hide: hv_status_banner

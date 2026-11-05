@@ -1,0 +1,28 @@
+# Geometry for the 5" 1024x600 panel (ESP32-S3-Touch-LCD-5B, SKU 28151)
+substitutions:
+  lcd_model: WAVESHARE-5-1024X600
+  # ---- Face ----
+  face_clock_size: "540"
+  face_clock_x: "30"
+  face_clock_y: "30"
+  face_panel_x: "610"
+  face_panel_w: "384"
+  face_date_y: "34"
+  face_weather_y: "120"
+  face_weather_h: "180"
+  face_event_y: "316"
+  face_event_h: "110"
+  face_values_y: "442"
+  face_values_h: "128"
+  face_value_w: "186"
+  face_value2_x: "808"
+  # ---- Home ----
+  home_margin: "32"
+  home_chips_y: "82"
+  home_body_y: "146"
+  home_body_h: "424"
+  home_stack_w: "380"
+  home_tiles_x: "428"
+  home_tiles_w: "564"
+  home_tile_w: "276"
+  home_tile_h: "133"

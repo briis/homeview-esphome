@@ -1,0 +1,147 @@
+#############################################################
+#  HomeView – Bryggers (HA package)
+#  Put next to homeview.yaml in /config/packages/
+#
+#  ALARM PIN — add to /config/secrets.yaml (quote them, so a leading
+#  0 survives):
+#    homeview_alarm_pin: "123456"    # what you type on the display
+#    homeview_alarm_code: "123456"   # sent to the panel as "code"
+#  They can be the same. The SPC panel entity requires a code to arm
+#  (code_arm_required) but doesn't check it itself (code_format: null),
+#  so THIS script is what protects disarming:
+#    - wrong PIN 3 times -> keypad locked for 5 minutes + notification
+#    - the display never sees the PIN, it only sends what was typed
+#  Note: script traces store variables, so HA admins can read the PIN
+#  in the script trace. That's the same audience that can read
+#  secrets.yaml anyway.
+#############################################################
+
+counter:
+  homeview_alarm_failures:
+    name: "HomeView alarm forkerte koder"
+    icon: mdi:shield-alert-outline
+    initial: 0
+    step: 1
+    minimum: 0
+    restore: true
+
+timer:
+  homeview_alarm_lockout:
+    name: "HomeView alarm spærret"
+    icon: mdi:shield-lock-outline
+    duration: "00:05:00"
+    restore: true
+
+script:
+  homeview_alarm:
+    alias: "HomeView alarm"
+    description: "Arm (no PIN) / disarm (PIN checked here) from a HomeView display"
+    icon: mdi:shield-home
+    mode: queued
+    max: 5
+    fields:
+      command:
+        description: "arm_home | arm_night | arm_away | disarm"
+        example: arm_home
+      pin:
+        description: "PIN typed on the display (disarm only)"
+    variables:
+      panel: alarm_control_panel.aic1200
+      expected_pin: !secret homeview_alarm_pin
+      panel_code: !secret homeview_alarm_code
+      max_attempts: 3
+    sequence:
+      - choose:
+          # ---- arm: no PIN needed ----
+          - conditions: "{{ command in ['arm_home', 'arm_night', 'arm_away'] }}"
+            sequence:
+              - action: "alarm_control_panel.alarm_{{ command }}"
+                target:
+                  entity_id: "{{ panel }}"
+                data:
+                  code: "{{ panel_code }}"
+
+          # ---- disarm: PIN required ----
+          - conditions: "{{ command == 'disarm' }}"
+            sequence:
+              - if: "{{ is_state('timer.homeview_alarm_lockout', 'active') }}"
+                then:
+                  - stop: "Keypad is locked out"
+              - if: "{{ (pin | default('') | string) == (expected_pin | string) }}"
+                then:
+                  - action: counter.reset
+                    target:
+                      entity_id: counter.homeview_alarm_failures
+                  - action: alarm_control_panel.alarm_disarm
+                    target:
+                      entity_id: "{{ panel }}"
+                    data:
+                      code: "{{ panel_code }}"
+                else:
+                  - action: counter.increment
+                    target:
+                      entity_id: counter.homeview_alarm_failures
+                  - if: "{{ states('counter.homeview_alarm_failures') | int(0) >= max_attempts }}"
+                    then:
+                      - action: timer.start
+                        target:
+                          entity_id: timer.homeview_alarm_lockout
+                      - action: counter.reset
+                        target:
+                          entity_id: counter.homeview_alarm_failures
+                      - action: persistent_notification.create
+                        data:
+                          notification_id: homeview_alarm_lockout
+                          title: "Alarm: forkert kode"
+                          message: >
+                            Der er tastet forkert kode {{ max_attempts }} gange på HomeView
+                            i bryggerset ({{ now().strftime('%H:%M') }}). Tastaturet er
+                            spærret i 5 minutter.
+
+template:
+  - sensor:
+      - name: "HomeView Bryggers Temperatur"
+        unique_id: homeview_bryggers_temperature
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        state: >
+          {{ state_attr('climate.floor_heating_utility_room', 'current_temperature') | float(none) }}
+        availability: >
+          {{ state_attr('climate.floor_heating_utility_room', 'current_temperature') is number }}
+
+      - name: "HomeView Bryggers Fugtighed"
+        unique_id: homeview_bryggers_humidity
+        unit_of_measurement: "%"
+        device_class: humidity
+        state_class: measurement
+        state: >
+          {{ state_attr('climate.floor_heating_utility_room', 'current_humidity') | float(none) }}
+        availability: >
+          {{ state_attr('climate.floor_heating_utility_room', 'current_humidity') is number }}
+
+      - name: "HomeView Bryggers Klima Tekst"
+        unique_id: homeview_bryggers_climate_text
+        state: >
+          {% set t = state_attr('climate.floor_heating_utility_room', 'current_temperature') %}
+          {% set h = state_attr('climate.floor_heating_utility_room', 'current_humidity') %}
+          {% if t is number %}{{ ('%.1f' | format(t)).replace('.', ',') }}°{% else %}–{% endif %}{% if h is number %} · {{ h | round(0) | int }} % fugt{% endif %}
+
+      - name: "HomeView Bryggers Dør Tekst"
+        unique_id: homeview_bryggers_door_text
+        state: >
+          {% set s = states('binary_sensor.door_sensor_frontdoor_dor') %}
+          {{ 'Dør åben' if s == 'on' else 'Dør lukket' if s == 'off' else 'Dør ukendt' }}
+
+      - name: "HomeView Bryggers Vindue Tekst"
+        unique_id: homeview_bryggers_window_text
+        state: >
+          {% set s = states('binary_sensor.window_utility_room') %}
+          {{ 'Vindue åbent' if s == 'on' else 'Vindue lukket' if s == 'off' else 'Vindue ukendt' }}
+
+      - name: "HomeView Bryggers Salt Tekst"
+        unique_id: homeview_bryggers_salt_text
+        state: >
+          {% set p = states('sensor.water_softener_salt_level_percentage') %}
+          {% set d = states('sensor.water_softener_days_until_out_of_salt') %}
+          {% if is_number(p) %}Salt {{ p | float | round(0) | int }} %{% if is_number(d) and d | int < 14 %} · {{ d | int }} dage{% endif %}{% else %}Salt –{% endif %}

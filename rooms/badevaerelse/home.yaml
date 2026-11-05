@@ -1,0 +1,117 @@
+#############################################################
+#  ROOM: Badeværelse — Home page (page id: home_page)
+#
+#   ┌ Badeværelse ─────────────────────────── TIRSDAG 3. NOV. 13:42 ┐
+#   │ [23,5° · 40 %]  [Vindue lukket]                                │
+#   │ ┌ Now Playing ───────────┐ ┌ Gulvvarme ────────────────────┐  │
+#   │ │ art  title / artist  📻│ │  (dial)    status  [−] [+]    │  │
+#   │ │   ⏮    ⏯    ⏭          │ │            [preset]           │  │
+#   │ │ 🔈 ──────────── 🔊     │ └───────────────────────────────┘  │
+#   │ └────────────────────────┘ [ 💡 Loftslys            Til     ]  │
+#   └────────────────────────────────────────────────────────────────┘
+#  Geometry is for the 800x480 panel.
+#############################################################
+
+packages:
+  bath_logos: !include logos.yaml
+  bath_header_data: !include
+    file: ../../widgets/page_header/data.yaml
+    vars: { uid: bath_header, time_id: hv_time }
+  bath_chip_climate_data: !include
+    file: ../../widgets/status_chip/data.yaml
+    vars: { uid: bath_chip_climate, entity: "${room_climate_text_entity}" }
+  bath_chip_window_data: !include
+    file: ../../widgets/status_chip/data.yaml
+    vars: { uid: bath_chip_window, entity: "${room_window_text_entity}" }
+  bath_media_data: !include
+    file: ../../widgets/media_player/data.yaml
+    vars:
+      uid: bath_media
+      entity: ${room_media_entity}
+      ha_url: ${ha_url}
+      # Built-in logos from rooms/badevaerelse/logos.yaml
+      logo_table: >-
+        {"DR P1", id(bath_logo_dr_p1)}, {"DR P2", id(bath_logo_dr_p2)},
+        {"DR P3", id(bath_logo_dr_p3)}, {"DR P4", id(bath_logo_dr_p4)},
+        {"DR P5", id(bath_logo_dr_p5)}, {"Piano Blues", id(bath_logo_piano_blues)},
+        {"Radio Soft", id(bath_logo_radio_soft)}
+  bath_heat_data: !include
+    file: ../../widgets/climate_dial/data.yaml
+    vars:
+      uid: bath_heat
+      entity: ${room_climate_entity}
+      min_half: "30"
+      max_half: "60"
+      preset_on: constant_temperature
+      preset_off: default
+      preset_on_label: "Konstant"
+      preset_off_label: "Program"
+  bath_light_data: !include
+    file: ../../widgets/home_tile/data.yaml
+    vars: { uid: bath_light, entity: "${room_light_entity}", on_color: "0xFFB300", toggle_action: light.toggle, on_text: "Til", off_text: "Fra" }
+
+lvgl:
+  pages:
+    - id: home_page
+      styles: hv_page
+      scrollable: false
+      on_swipe_right:
+        - script.execute: homeview_user_activity
+        - script.execute: homeview_show_face
+      widgets:
+        - !include
+          file: ../../widgets/page_header/ui.yaml
+          vars: { uid: bath_header, title: "${room_title}", margin: 28 }
+
+        # ---------- Status chips ----------
+        - obj:
+            x: 28
+            y: 72
+            width: SIZE_CONTENT
+            height: SIZE_CONTENT
+            scrollable: false
+            clickable: false
+            layout:
+              type: FLEX
+              flex_flow: ROW
+              pad_column: 10
+            widgets:
+              - !include
+                file: ../../widgets/status_chip/ui.yaml
+                vars: { uid: bath_chip_climate, icon: "\U000F058E", icon_color: "${c_teal}" }
+              - !include
+                file: ../../widgets/status_chip/ui.yaml
+                vars: { uid: bath_chip_window, icon: "\U000F11DB", icon_color: "${c_label_2}" }
+
+        # ---------- Now Playing ----------
+        - !include
+          file: ../../widgets/media_player/ui.yaml
+          vars: { uid: bath_media, x: 28, y: 130, width: 372, height: 330, radio_page: radio_page }
+
+        # ---------- Floor heating ----------
+        - !include
+          file: ../../widgets/climate_dial/ui.yaml
+          vars:
+            uid: bath_heat
+            x: 412
+            y: 130
+            width: 360
+            height: 216
+            title: "Gulvvarme"
+            min_half: "30"
+            max_half: "60"
+            preset_on_label: "Konstant"
+            preset_off_label: "Program"
+
+        # ---------- Light ----------
+        - obj:
+            x: 412
+            y: 358
+            width: 360
+            height: 102
+            scrollable: false
+            clickable: false
+            widgets:
+              - !include
+                file: ../../widgets/home_tile/ui.yaml
+                vars: { uid: bath_light, width: 360, height: 102, name: "${room_light_name}", icon: "\U000F0769", on_color: "0xFFB300" }

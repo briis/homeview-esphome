@@ -1,0 +1,111 @@
+# ---------------------------------------------------------------
+#  Widget: Doorbell camera — full-screen view (goes in lvgl: top_layer:)
+#  Opens when the doorbell rings or the tile is tapped, on any page.
+#  vars: uid, big_w, big_h, panel_w (= screen width - big_w)
+#  Pair with widgets/doorbell_camera/data.yaml (same uid).
+#
+#  Usage in a room package:
+#    lvgl:
+#      top_layer:
+#        widgets:
+#          - !include { file: ../../widgets/doorbell_camera/overlay.yaml,
+#                       vars: { uid: door_cam, big_w: 360, big_h: 480, panel_w: 440 } }
+# ---------------------------------------------------------------
+obj:
+  id: ${uid}_overlay
+  width: 100%
+  height: 100%
+  bg_color: ${c_bg}
+  bg_opa: COVER
+  hidden: true
+  clickable: true          # swallow touches meant for the page underneath
+  scrollable: false
+  widgets:
+    # ---------- camera ----------
+    - obj:
+        x: 0
+        y: 0
+        width: ${big_w}
+        height: ${big_h}
+        bg_color: ${c_platter}
+        bg_opa: COVER
+        clickable: false
+        scrollable: false
+        widgets:
+          - label:
+              id: ${uid}_big_placeholder
+              align: CENTER
+              text: "\U000F0869"
+              text_font: hv_icons_lg
+              text_color: 0x48484A
+          - image:
+              id: ${uid}_big
+              align: CENTER
+              src: ${uid}_big_img
+              hidden: true
+              clickable: false
+    # ---------- side panel ----------
+    - obj:
+        x: ${big_w}
+        y: 0
+        width: ${panel_w}
+        height: 100%
+        pad_left: 32
+        pad_right: 28
+        pad_top: 44
+        pad_bottom: 28
+        clickable: false
+        scrollable: false
+        layout:
+          type: FLEX
+          flex_flow: COLUMN
+          pad_row: 8
+        widgets:
+          - label:
+              text: "\U000F12E6"
+              text_font: hv_icons_lg
+              text_color: ${c_red}
+          - label:
+              id: ${uid}_ov_caption
+              text: "DØRKLOKKE"
+              styles: hv_caption
+              text_color: ${c_red}
+          - label:
+              id: ${uid}_ov_title
+              width: 100%
+              long_mode: WRAP
+              text: "Der ringes på"
+              text_font: hv_font_large_title
+          - label:
+              id: ${uid}_ov_time
+              text: ""
+              styles: hv_secondary
+          # push the button to the bottom
+          - obj:
+              width: 100%
+              flex_grow: 1
+              clickable: false
+              scrollable: false
+          - button:
+              width: 100%
+              height: 64
+              styles: hv_tile_off
+              pressed:
+                transform_width: -4
+                transform_height: -4
+              on_click:
+                - script.execute: ${uid}_close
+              layout:
+                type: FLEX
+                flex_flow: ROW
+                flex_align_main: CENTER
+                flex_align_cross: CENTER
+                flex_align_track: CENTER
+                pad_column: 8
+              widgets:
+                - label:
+                    text: "\U000F0156"
+                    text_font: hv_icons_md
+                - label:
+                    text: "Luk"
+                    text_font: hv_font_title

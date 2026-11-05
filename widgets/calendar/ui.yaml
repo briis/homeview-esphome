@@ -1,0 +1,40 @@
+# ---------------------------------------------------------------
+#  Widget: Next calendar event (Apple Calendar "Up Next" style)
+#  vars: uid, x, y, width, height, accent
+# ---------------------------------------------------------------
+obj:
+  id: ${uid}
+  x: ${x}
+  y: ${y}
+  width: ${width}
+  height: ${height}
+  styles: hv_platter
+  scrollable: false
+  clickable: false
+  widgets:
+    # Coloured event bar
+    - obj:
+        align: LEFT_MID
+        width: 5
+        height: 100%
+        radius: 3
+        bg_color: ${accent}
+        bg_opa: COVER
+        clickable: false
+    - label:
+        id: ${uid}_when
+        x: 16
+        align: TOP_LEFT
+        text: ""
+        styles: hv_caption
+        text_color: ${accent}
+    - label:
+        id: ${uid}_title
+        x: 16
+        y: 22
+        align: TOP_LEFT
+        width: 100%
+        long_mode: DOT
+        text: ""
+        text_font: hv_font_title
+        text_color: ${c_label}

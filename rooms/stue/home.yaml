@@ -1,0 +1,143 @@
+#############################################################
+#  ROOM: Stue — Home page (page id: home_page)
+#
+#   ┌ Stue ───────────────────────────────── TORSDAG 5. NOV. 11:24 ┐
+#   │ [26,6° · 22 %]  [Vindue lukket]  [Dør lukket]                 │
+#   │ ┌ LIVE ────────┐ ┌ Gulvvarme ─────────────────────────────┐   │
+#   │ │              │ │  (dial)        status  [−] [+]          │   │
+#   │ │   doorbell   │ │                [preset]                 │   │
+#   │ │   camera     │ └─────────────────────────────────────────┘   │
+#   │ │ [🔔 Fordør]  │ [ 💡 Gulvlamper  Fra ] [ 💡 Væglys   Fra ]    │
+#   │ └──────────────┘                                               │
+#   └───────────────────────────────────────────────────────────────┘
+#  + full-screen doorbell view on the top layer (any page).
+#  Geometry is for the 800x480 panel.
+#############################################################
+
+packages:
+  stue_header_data: !include
+    file: ../../widgets/page_header/data.yaml
+    vars: { uid: stue_header, time_id: hv_time }
+  stue_chip_climate_data: !include
+    file: ../../widgets/status_chip/data.yaml
+    vars: { uid: stue_chip_climate, entity: "${room_climate_text_entity}" }
+  stue_chip_window_data: !include
+    file: ../../widgets/status_chip/data.yaml
+    vars: { uid: stue_chip_window, entity: "${room_window_text_entity}" }
+  stue_chip_door_data: !include
+    file: ../../widgets/status_chip/data.yaml
+    vars: { uid: stue_chip_door, entity: "${room_door_text_entity}" }
+  stue_cam_data: !include
+    file: ../../widgets/doorbell_camera/data.yaml
+    vars:
+      uid: stue_cam
+      title: "${room_camera_name}"
+      camera_entity: ${room_camera_entity}
+      ring_entity: ${room_doorbell_entity}
+      ha_url: ${ha_url}
+      tile_page: home_page
+      small_w: "246"
+      small_h: "328"
+      big_w: "360"
+      big_h: "480"
+      ring_seconds: "60"
+      tile_refresh_s: "2"
+  stue_heat_data: !include
+    file: ../../widgets/climate_dial/data.yaml
+    vars:
+      uid: stue_heat
+      entity: ${room_climate_entity}
+      min_half: "30"
+      max_half: "60"
+      preset_on: constant_temperature
+      preset_off: default
+      preset_on_label: "Konstant"
+      preset_off_label: "Program"
+  stue_light1_data: !include
+    file: ../../widgets/home_tile/data.yaml
+    vars: { uid: stue_light1, entity: "${room_light1_entity}", on_color: "0xFFB300", toggle_action: light.toggle, on_text: "Til", off_text: "Fra" }
+  stue_light2_data: !include
+    file: ../../widgets/home_tile/data.yaml
+    vars: { uid: stue_light2, entity: "${room_light2_entity}", on_color: "0xFFB300", toggle_action: light.toggle, on_text: "Til", off_text: "Fra" }
+
+lvgl:
+  top_layer:
+    widgets:
+      - !include
+        file: ../../widgets/doorbell_camera/overlay.yaml
+        vars: { uid: stue_cam, big_w: 360, big_h: 480, panel_w: 440 }
+
+  pages:
+    - id: home_page
+      styles: hv_page
+      scrollable: false
+      on_swipe_right:
+        - script.execute: homeview_user_activity
+        - script.execute: homeview_show_face
+      widgets:
+        - !include
+          file: ../../widgets/page_header/ui.yaml
+          vars: { uid: stue_header, title: "${room_title}", margin: 28 }
+
+        # ---------- Status chips ----------
+        - obj:
+            x: 28
+            y: 72
+            width: SIZE_CONTENT
+            height: SIZE_CONTENT
+            scrollable: false
+            clickable: false
+            layout:
+              type: FLEX
+              flex_flow: ROW
+              pad_column: 10
+            widgets:
+              - !include
+                file: ../../widgets/status_chip/ui.yaml
+                vars: { uid: stue_chip_climate, icon: "\U000F058E", icon_color: "${c_teal}" }
+              - !include
+                file: ../../widgets/status_chip/ui.yaml
+                vars: { uid: stue_chip_window, icon: "\U000F11DB", icon_color: "${c_label_2}" }
+              - !include
+                file: ../../widgets/status_chip/ui.yaml
+                vars: { uid: stue_chip_door, icon: "\U000F081B", icon_color: "${c_label_2}" }
+
+        # ---------- Doorbell camera ----------
+        - !include
+          file: ../../widgets/doorbell_camera/ui.yaml
+          vars: { uid: stue_cam, x: 28, y: 130, width: 246, height: 328, title: "${room_camera_name}" }
+
+        # ---------- Floor heating ----------
+        - !include
+          file: ../../widgets/climate_dial/ui.yaml
+          vars:
+            uid: stue_heat
+            x: 286
+            y: 130
+            width: 486
+            height: 216
+            title: "Gulvvarme"
+            min_half: "30"
+            max_half: "60"
+            preset_on_label: "Konstant"
+            preset_off_label: "Program"
+
+        # ---------- Lights ----------
+        - obj:
+            x: 286
+            y: 358
+            width: 486
+            height: 100
+            scrollable: false
+            clickable: false
+            layout:
+              type: FLEX
+              flex_flow: ROW
+              pad_column: 12
+            widgets:
+              - !include
+                file: ../../widgets/home_tile/ui.yaml
+                vars: { uid: stue_light1, width: 237, height: 100, name: "${room_light1_name}", icon: "\U000F08DD", on_color: "0xFFB300" }
+              - !include
+                file: ../../widgets/home_tile/ui.yaml
+                vars: { uid: stue_light2, width: 237, height: 100, name: "${room_light2_name}", icon: "\U000F091C", on_color: "0xFFB300" }

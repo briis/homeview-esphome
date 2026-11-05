@@ -1,0 +1,96 @@
+#############################################################
+#  PAGE: Face — the always-on HomeView "face"
+#  Analog clock + date + four complications (HomeView faces carry
+#  four adjustable widgets).
+#
+#  Geometry comes from packages/hardware/layout-*.yaml
+#  Entities come from the device file substitutions.
+#############################################################
+
+packages:
+  face_clock_data: !include
+    file: ../../widgets/clock_analog/data.yaml
+    vars: { uid: face_clock, time_id: hv_time }
+  face_date_data: !include
+    file: ../../widgets/date_header/data.yaml
+    vars: { uid: face_date, time_id: hv_time }
+  face_weather_data: !include
+    file: ../../widgets/weather/data.yaml
+    vars:
+      uid: face_weather
+      weather_entity: ${weather_entity}
+      high_entity: ${weather_high_entity}
+      low_entity: ${weather_low_entity}
+  face_event_data: !include
+    file: ../../widgets/calendar/data.yaml
+    vars: { uid: face_event, event_entity: "${event_entity}" }
+  face_value1_data: !include
+    file: ../../widgets/value/data.yaml
+    vars: { uid: face_value1, entity: "${face_value1_entity}", decimals: "${face_value1_decimals}", unit: "${face_value1_unit}" }
+  face_value2_data: !include
+    file: ../../widgets/value/data.yaml
+    vars: { uid: face_value2, entity: "${face_value2_entity}", decimals: "${face_value2_decimals}", unit: "${face_value2_unit}" }
+
+lvgl:
+  pages:
+    - id: face_page
+      styles: hv_page
+      scrollable: false
+      on_click:
+        - script.execute: homeview_user_activity
+        - script.execute: homeview_show_home
+      on_swipe_left:
+        - script.execute: homeview_user_activity
+        - script.execute: homeview_show_home
+      widgets:
+        - !include
+          file: ../../widgets/clock_analog/ui.yaml
+          vars: { uid: face_clock, size: "${face_clock_size}", x: "${face_clock_x}", y: "${face_clock_y}" }
+
+        - !include
+          file: ../../widgets/date_header/ui.yaml
+          vars: { uid: face_date, x: "${face_panel_x}", y: "${face_date_y}", width: "${face_panel_w}" }
+
+        - !include
+          file: ../../widgets/weather/ui.yaml
+          vars:
+            uid: face_weather
+            x: ${face_panel_x}
+            y: ${face_weather_y}
+            width: ${face_panel_w}
+            height: ${face_weather_h}
+            location: ${location_name}
+
+        - !include
+          file: ../../widgets/calendar/ui.yaml
+          vars:
+            uid: face_event
+            x: ${face_panel_x}
+            y: ${face_event_y}
+            width: ${face_panel_w}
+            height: ${face_event_h}
+            accent: ${c_orange}
+
+        - !include
+          file: ../../widgets/value/ui.yaml
+          vars:
+            uid: face_value1
+            x: ${face_panel_x}
+            y: ${face_values_y}
+            width: ${face_value_w}
+            height: ${face_values_h}
+            icon: ${face_value1_icon}
+            icon_color: ${face_value1_color}
+            label: ${face_value1_label}
+
+        - !include
+          file: ../../widgets/value/ui.yaml
+          vars:
+            uid: face_value2
+            x: ${face_value2_x}
+            y: ${face_values_y}
+            width: ${face_value_w}
+            height: ${face_values_h}
+            icon: ${face_value2_icon}
+            icon_color: ${face_value2_color}
+            label: ${face_value2_label}

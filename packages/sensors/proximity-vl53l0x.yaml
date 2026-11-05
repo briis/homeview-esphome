@@ -1,0 +1,67 @@
+#############################################################
+#  PROXIMITY: VL53L0X time-of-flight sensor on the I2C header
+#
+#  Wiring (board "I2C" header, shared with touch/CH422G, 3.3 V):
+#    VL53L0X VIN -> 3V3, GND -> GND, SDA -> GPIO8, SCL -> GPIO9
+#  Address 0x29 does not collide with GT911 (0x5D/0x14) or CH422G.
+#
+#  Enclosure: ToF is optical - it needs a line of sight. Leave a
+#  ~5 mm hole in the bezel (or glue a piece of IR-transparent acrylic
+#  in front). It cannot see through opaque PLA/PETG.
+#  Range ~1.2 m (default) / ~2 m with long_range.
+#
+#  Provides: binary_sensor id hv_proximity  (contract for presence.yaml)
+#############################################################
+
+substitutions:
+  proximity_default_cm: "90"
+
+sensor:
+  - platform: vl53l0x
+    id: hv_distance
+    name: "Afstand"
+    i2c_id: bus_a
+    address: 0x29
+    long_range: true
+    # 500 ms leaves headroom when a full-screen redraw briefly blocks the loop
+    update_interval: 500ms
+    unit_of_measurement: m
+    accuracy_decimals: 2
+    entity_category: diagnostic
+    filters:
+      - median:
+          window_size: 5
+          send_every: 2
+      # Report to HA at most every 5 s - the lambda below reads the live value
+      - or:
+          - throttle: 5s
+          - delta: 0.25
+
+number:
+  - platform: template
+    id: hv_proximity_cm
+    name: "Nærhedsafstand"
+    icon: mdi:ruler
+    unit_of_measurement: cm
+    min_value: 30
+    max_value: 200
+    step: 5
+    initial_value: ${proximity_default_cm}
+    optimistic: true
+    restore_value: true
+    entity_category: config
+
+binary_sensor:
+  - platform: template
+    id: hv_proximity
+    name: "Nærhed"
+    device_class: occupancy
+    lambda: |-
+      const float d = id(hv_distance).get_raw_state();   // metres, NaN when nothing in range
+      if (std::isnan(d)) return false;
+      return d * 100.0f < id(hv_proximity_cm).state;
+    filters:
+      - delayed_on: 300ms   # ignore someone just walking past
+      - delayed_off: 4s
+    on_state:
+      - script.execute: homeview_proximity_changed

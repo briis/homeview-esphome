@@ -1,0 +1,189 @@
+# ---------------------------------------------------------------
+#  Widget data: Doorbell camera
+#  vars: uid, title, camera_entity, ring_entity, ha_url, tile_page,
+#        small_w, small_h   tile image size     (e.g. 246x328 for a 3:4 camera)
+#        big_w, big_h       full-screen image   (e.g. 360x480)
+#        ring_seconds       how long the full-screen view stays open
+#        tile_refresh_s     tile refresh period while its page is visible
+#
+#  The ESP32-S3 can't decode the camera's H.264 stream, so this is a
+#  "live" view built from JPEG snapshots: Home Assistant's camera proxy
+#  scales each snapshot to the exact size we ask for, and the device
+#  fetches a new one every 1 s (full screen) or every tile_refresh_s
+#  (tile). Snapshots are only fetched while they are on screen.
+#
+#  Ring: when ring_entity turns on, the screen wakes and the full-screen
+#  view opens for ring_seconds (tap "Luk" to close it earlier).
+#  Tap the tile to open the full-screen view at any time.
+#  Pair with widgets/doorbell_camera/ui.yaml and overlay.yaml (same uid).
+# ---------------------------------------------------------------
+http_request:
+  verify_ssl: false
+  timeout: 3s
+
+image:
+  - platform: online_image
+    id: ${uid}_small_img
+    url: ${ha_url}/
+    format: JPEG
+    type: RGB565
+    resize: ${small_w}x${small_h}
+    buffer_size: 16384
+    on_download_finished:
+      - lambda: |-
+          id(${uid}_busy) = false;
+          lv_image_set_src(id(${uid}_img), id(${uid}_small_img)->get_lv_image_dsc());
+          lv_obj_invalidate(id(${uid}_img));
+          lv_obj_clear_flag(id(${uid}_img), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(${uid}_placeholder), LV_OBJ_FLAG_HIDDEN);
+    on_error:
+      - lambda: |-
+          id(${uid}_busy) = false;
+          id(${uid}_retry_at) = millis() + 30000;   // HA unreachable: don't block the loop every refresh
+
+  - platform: online_image
+    id: ${uid}_big_img
+    url: ${ha_url}/
+    format: JPEG
+    type: RGB565
+    resize: ${big_w}x${big_h}
+    buffer_size: 16384
+    on_download_finished:
+      - lambda: |-
+          id(${uid}_busy) = false;
+          lv_image_set_src(id(${uid}_big), id(${uid}_big_img)->get_lv_image_dsc());
+          lv_obj_invalidate(id(${uid}_big));
+          lv_obj_clear_flag(id(${uid}_big), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(${uid}_big_placeholder), LV_OBJ_FLAG_HIDDEN);
+    on_error:
+      - lambda: |-
+          id(${uid}_busy) = false;
+          id(${uid}_retry_at) = millis() + 30000;   // HA unreachable: don't block the loop every refresh
+
+globals:
+  # one download at a time (both images share the HTTP client)
+  - id: ${uid}_busy
+    type: bool
+    initial_value: "false"
+  - id: ${uid}_busy_since
+    type: uint32_t
+    initial_value: "0"
+  # millis() when the full-screen view closes (0 = closed)
+  - id: ${uid}_overlay_until
+    type: uint32_t
+    initial_value: "0"
+  # millis() until the tile shows "RINGER" (0 = not ringing)
+  - id: ${uid}_ring_until
+    type: uint32_t
+    initial_value: "0"
+  - id: ${uid}_tick
+    type: int
+    initial_value: "0"
+  # after a failed download, wait until this millis() before trying again
+  # (each failed connect blocks the main loop for the http timeout)
+  - id: ${uid}_retry_at
+    type: uint32_t
+    initial_value: "0"
+
+text_sensor:
+  # /api/camera_proxy/<camera>?token=...  (HA rotates the token every 5 min)
+  - platform: homeassistant
+    id: ${uid}_picture_ha
+    entity_id: ${camera_entity}
+    attribute: entity_picture
+    internal: true
+
+binary_sensor:
+  - platform: homeassistant
+    id: ${uid}_ring_ha
+    entity_id: ${ring_entity}
+    internal: true
+    on_press:
+      - script.execute: ${uid}_ring
+
+script:
+  - id: ${uid}_fetch
+    parameters:
+      big: bool
+    then:
+      - lambda: |-
+          if (id(${uid}_busy) && millis() - id(${uid}_busy_since) < 8000) return;
+          if (id(${uid}_retry_at) != 0 && (int32_t) (millis() - id(${uid}_retry_at)) < 0) return;
+          id(${uid}_retry_at) = 0;
+          std::string pic = id(${uid}_picture_ha).state;
+          if (pic.empty() || pic == "None" || pic == "unknown") return;
+          std::string url = pic.rfind("http", 0) == 0 ? pic : std::string("${ha_url}") + pic;
+          url += (url.find('?') == std::string::npos) ? "?" : "&";
+          url += big ? "width=${big_w}&height=${big_h}" : "width=${small_w}&height=${small_h}";
+          auto *img = big ? id(${uid}_big_img) : id(${uid}_small_img);
+          id(${uid}_busy) = true;
+          id(${uid}_busy_since) = millis();
+          img->set_url(url);
+          img->update();
+
+  # Open the full-screen view. ringing = true when the doorbell was pressed.
+  - id: ${uid}_open
+    parameters:
+      ringing: bool
+    then:
+      - script.execute: homeview_user_activity
+      - lambda: |-
+          id(${uid}_overlay_until) = millis() + ${ring_seconds} * 1000UL;
+          lv_label_set_text(id(${uid}_ov_caption), ringing ? "DØRKLOKKE" : "KAMERA");
+          lv_obj_set_style_text_color(id(${uid}_ov_caption),
+              lv_color_hex(ringing ? ${c_red} : ${c_label_2}), LV_PART_MAIN);
+          lv_label_set_text(id(${uid}_ov_title), ringing ? "Der ringes på" : "${title}");
+          auto t = id(hv_time).now();
+          std::string sub = t.is_valid() ? (std::string(ringing ? "Ringede kl. " : "Kl. ") + t.strftime("%H:%M")) : std::string("");
+          lv_label_set_text(id(${uid}_ov_time), sub.c_str());
+          lv_obj_clear_flag(id(${uid}_overlay), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_move_foreground(id(${uid}_overlay));
+      - script.execute:
+          id: ${uid}_fetch
+          big: true
+
+  - id: ${uid}_close
+    then:
+      - lambda: |-
+          id(${uid}_overlay_until) = 0;
+          lv_obj_add_flag(id(${uid}_overlay), LV_OBJ_FLAG_HIDDEN);
+      - script.execute: homeview_user_activity
+
+  - id: ${uid}_ring
+    then:
+      - lambda: |-
+          id(${uid}_retry_at) = 0;          // someone is at the door: try right away
+          id(${uid}_ring_until) = millis() + ${ring_seconds} * 1000UL;
+          lv_label_set_text(id(${uid}_badge_text), "RINGER");
+          lv_obj_set_style_bg_color(id(${uid}_badge), lv_color_hex(${c_red}), LV_PART_MAIN);
+      - script.execute:
+          id: ${uid}_open
+          ringing: true
+
+interval:
+  - interval: 1s
+    then:
+      - lambda: |-
+          const uint32_t now = millis();
+          // ring badge on the tile
+          if (id(${uid}_ring_until) != 0 && (int32_t) (now - id(${uid}_ring_until)) > 0) {
+            id(${uid}_ring_until) = 0;
+            lv_label_set_text(id(${uid}_badge_text), "LIVE");
+            lv_obj_set_style_bg_color(id(${uid}_badge), lv_color_hex(0x48484A), LV_PART_MAIN);
+          }
+          // full-screen view: refresh every second, close after ring_seconds
+          if (id(${uid}_overlay_until) != 0) {
+            if ((int32_t) (now - id(${uid}_overlay_until)) > 0) {
+              id(${uid}_close)->execute();
+            } else {
+              id(${uid}_fetch)->execute(true);
+            }
+            return;
+          }
+          // tile: refresh only while its page is on a lit screen
+          if (lv_screen_active() != id(${tile_page})->obj) return;
+          if (!id(screen_backlight).remote_values.is_on()) return;
+          if (++id(${uid}_tick) >= ${tile_refresh_s}) {
+            id(${uid}_tick) = 0;
+            id(${uid}_fetch)->execute(false);
+          }

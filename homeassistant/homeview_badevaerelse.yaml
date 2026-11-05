@@ -1,0 +1,39 @@
+#############################################################
+#  HomeView – Badeværelse (HA package)
+#  Put next to homeview.yaml in /config/packages/
+#  The Roth thermostat also reports room temperature + humidity.
+#############################################################
+
+template:
+  - sensor:
+      - name: "HomeView Badeværelse Temperatur"
+        unique_id: homeview_badevaerelse_temperature
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        state: >
+          {{ state_attr('climate.floor_heating_bathroom', 'current_temperature') | float(none) }}
+        availability: >
+          {{ state_attr('climate.floor_heating_bathroom', 'current_temperature') is number }}
+
+      - name: "HomeView Badeværelse Fugtighed"
+        unique_id: homeview_badevaerelse_humidity
+        unit_of_measurement: "%"
+        device_class: humidity
+        state_class: measurement
+        state: >
+          {{ state_attr('climate.floor_heating_bathroom', 'current_humidity') | float(none) }}
+        availability: >
+          {{ state_attr('climate.floor_heating_bathroom', 'current_humidity') is number }}
+
+      - name: "HomeView Badeværelse Klima Tekst"
+        unique_id: homeview_badevaerelse_climate_text
+        state: >
+          {% set t = state_attr('climate.floor_heating_bathroom', 'current_temperature') %}
+          {% set h = state_attr('climate.floor_heating_bathroom', 'current_humidity') %}
+          {% if t is number %}{{ ('%.1f' | format(t)).replace('.', ',') }}°{% else %}–{% endif %}{% if h is number %} · {{ h | round(0) | int }} % fugt{% endif %}
+
+      - name: "HomeView Badeværelse Vindue Tekst"
+        unique_id: homeview_badevaerelse_window_text
+        state: >
+          {{ 'Vindue åbent' if is_state('binary_sensor.badevaerelse_window_bathroom', 'on') else 'Vindue lukket' }}

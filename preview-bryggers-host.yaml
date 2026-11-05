@@ -1,0 +1,198 @@
+#############################################################
+#  HomeView desktop preview (ESPHome "host" platform + SDL window)
+#  Renders the exact same theme/pages/widgets on your Mac/PC.
+#    esphome run preview-host.yaml
+#  Needs SDL2 (brew install sdl2). Demo data is injected on boot.
+#############################################################
+substitutions:
+  device_name: homeview-preview-bryggers
+  location_name: "Roskilde"
+  weather_entity: weather.demo
+  weather_high_entity: sensor.demo_high
+  weather_low_entity: sensor.demo_low
+  event_entity: sensor.demo_event
+  price_entity: sensor.demo_price
+  price_level_entity: sensor.demo_price_level
+  price_cheapest_entity: sensor.demo_price_cheapest
+  face_value1_entity: sensor.demo_indoor
+  face_value1_label: "BRYGGERS"
+  face_value1_icon: "\U000F050F"
+  face_value1_color: "0xFF9F0A"
+  face_value1_decimals: "1"
+  face_value1_unit: "°"
+  face_value2_entity: sensor.demo_price
+  face_value2_label: "FUGT"
+  face_value2_icon: "\U000F058E"
+  face_value2_color: "0x64D2FF"
+  face_value2_decimals: "0"
+  face_value2_unit: " %"
+  home_title: "Hjem"
+  chip_climate_entity: sensor.demo_chip1
+  chip_lights_entity: sensor.demo_chip2
+  chip_locks_entity: sensor.demo_chip3
+  tile1_entity: light.demo1
+  tile1_name: "Loftslys Stue"
+  tile1_icon: "\U000F0769"
+  tile1_color: "0xFFB300"
+  tile1_action: light.toggle
+  tile2_entity: light.demo2
+  tile2_name: "Gulvlamper"
+  tile2_icon: "\U000F08DD"
+  tile2_color: "0xFFB300"
+  tile2_action: light.toggle
+  tile3_entity: light.demo3
+  tile3_name: "Spisebord"
+  tile3_icon: "\U000F0335"
+  tile3_color: "0xFFB300"
+  tile3_action: light.toggle
+  tile4_entity: light.demo4
+  tile4_name: "Køkkenvask"
+  tile4_icon: "\U000F0335"
+  tile4_color: "0xFFB300"
+  tile4_action: light.toggle
+  tile5_entity: light.demo5
+  tile5_name: "Panelvæg"
+  tile5_icon: "\U000F1051"
+  tile5_color: "0xFFB300"
+  tile5_action: light.toggle
+  lock1_entity: lock.demo
+  lock1_name: "Fordør"
+  ha_url: "http://127.0.0.1:8123"
+  room_title: "Bryggers"
+  room_climate_entity: climate.demo
+  room_light_entity: light.demo_l1
+  room_light_name: "Loftslys"
+  room_lock_entity: lock.demo
+  room_lock_name: "Fordør"
+  room_alarm_entity: alarm_control_panel.demo
+  room_leak_entity: binary_sensor.demo_leak
+  room_fire_entity: binary_sensor.demo_fire
+  room_alarm_script: script.demo_alarm
+  room_alarm_failures_entity: counter.demo
+  room_alarm_lockout_entity: timer.demo
+  room_climate_text_entity: sensor.demo_climate
+  room_door_text_entity: sensor.demo_door
+  room_window_text_entity: sensor.demo_window
+  room_salt_text_entity: sensor.demo_salt
+  # Which screen to show 3 s after boot: face | home | night | radio
+  preview_screen: face
+  preview_stack_card: "0"
+
+esphome:
+  name: ${device_name}
+  # Only needed where the PlatformIO registry is unreachable; harmless otherwise
+  libraries:
+    - "lvgl/lvgl=https://github.com/lvgl/lvgl.git#v9.5.0"
+    - "bblanchon/ArduinoJson=https://github.com/bblanchon/ArduinoJson.git#v7.4.3"
+    - "pngle=https://github.com/kikuchan/pngle.git#v1.1.0"
+  on_boot:
+    priority: -100
+    then:
+      - delay: 500ms
+      - lambda: |-
+          id(face_weather_cond_ha).publish_state("cloudy");
+          id(face_weather_temp_ha).publish_state(7.0);
+          id(face_weather_high_ha).publish_state(9);
+          id(face_weather_low_ha).publish_state(4);
+          id(face_event_title_ha).publish_state("Tandlæge");
+          id(face_event_when_ha).publish_state("I DAG · 15:00");
+          id(face_value1_ha).publish_state(23.5);
+          id(face_value2_ha).publish_state(40);
+          id(bry_chip_climate_ha).publish_state("27,2° · 25 % fugt");
+          id(bry_chip_door_ha).publish_state("Dør lukket");
+          id(bry_chip_window_ha).publish_state("Vindue lukket");
+          id(bry_chip_salt_ha).publish_state("Salt 80 %");
+          id(bry_heat_target_ha).publish_state(22.0);
+          id(bry_heat_current_ha).publish_state(27.2);
+          id(bry_heat_action_ha).publish_state("idle");
+          id(bry_heat_preset_ha).publish_state("constant_temperature");
+          id(bry_lock_ha).publish_state("locked");
+          id(bry_light_ha).publish_state("off");
+          id(bry_alarm_lock_ha).publish_state("idle");
+          id(bry_alarm_state_ha).publish_state(std::string("${preview_screen}") == "armed" || std::string("${preview_screen}") == "keypad" ? "armed_night" : "disarmed");
+      - delay: 2500ms
+      - if:
+          condition:
+            lambda: 'return std::string("${preview_screen}") != "face";'
+          then:
+            - lvgl.page.show: home_page
+      - if:
+          condition:
+            lambda: 'return std::string("${preview_screen}") == "keypad";'
+          then:
+            - script.execute: bry_alarm_kp_show
+            - delay: 300ms
+            - script.execute: { id: bry_alarm_key, key: "1" }
+            - script.execute: { id: bry_alarm_key, key: "2" }
+            - script.execute: { id: bry_alarm_key, key: "3" }
+            - script.execute: { id: bry_alarm_key, key: "4" }
+      - if:
+          condition:
+            lambda: 'return std::string("${preview_screen}") == "confirm";'
+          then:
+            - script.execute: { id: bry_alarm_confirm, command: "arm_away" }
+      - if:
+          condition:
+            lambda: 'return std::string("${preview_screen}") == "leak";'
+          then:
+            - script.execute: bry_leak_show
+
+host:
+
+logger:
+  level: INFO
+
+api:
+
+time:
+  - platform: host
+    id: hv_time
+    timezone: Europe/Copenhagen
+
+display:
+  - platform: sdl
+    id: main_display
+    dimensions:
+      width: 800
+      height: 480
+    update_interval: never
+    auto_clear_enabled: false
+
+touchscreen:
+  - platform: sdl
+    id: main_touch
+    display: main_display
+
+output:
+  - platform: template
+    id: backlight_output
+    type: binary
+    write_action:
+      - logger.log: "backlight"
+
+light:
+  - platform: binary
+    id: screen_backlight
+    name: "Skærm"
+    output: backlight_output
+    restore_mode: ALWAYS_ON
+
+binary_sensor:
+  - platform: template
+    id: hv_proximity
+    name: "Nærhed"
+    lambda: "return false;"
+
+packages:
+  layout: !include packages/hardware/layout-800x480.yaml
+  theme: !include packages/core/theme.yaml
+  presence: !include packages/core/presence.yaml
+  face: !include packages/pages/face.yaml
+  home: !include rooms/bryggers/home.yaml
+
+
+# referenced by the top-layer banner in theme
+script:
+  - id: homeview_refresh_all
+    then:
+      - lvgl.widget.hide: hv_status_banner

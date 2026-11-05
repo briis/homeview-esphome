@@ -1,0 +1,52 @@
+# ---------------------------------------------------------------
+#  Widget data: Radio station tile
+#  vars: uid, entity, source, back_page
+#    source    = the favourite's name exactly as in the player's
+#                source_list (e.g. "DR P4 København")
+#    back_page = page to return to after choosing (e.g. home_page)
+# ---------------------------------------------------------------
+text_sensor:
+  - platform: homeassistant
+    id: ${uid}_channel_ha
+    entity_id: ${entity}
+    attribute: media_channel
+    internal: true
+    on_value:
+      - script.execute: ${uid}_render
+
+  - platform: homeassistant
+    id: ${uid}_state_ha
+    entity_id: ${entity}
+    internal: true
+    on_value:
+      - script.execute: ${uid}_render
+
+script:
+  - id: ${uid}_render
+    then:
+      - lambda: |-
+          // Sonos reports the station as media_channel; match the favourite
+          // name (either may be a prefix of the other, e.g. "DR P4").
+          const std::string ch = id(${uid}_channel_ha).state;
+          const std::string src = "${source}";
+          const bool active = id(${uid}_state_ha).state == "playing" && !ch.empty() &&
+                              (ch.rfind(src, 0) == 0 || src.rfind(ch, 0) == 0);
+          if (active) {
+            lv_obj_add_state(id(${uid}), LV_STATE_CHECKED);
+            lv_obj_clear_flag(id(${uid}_badge), LV_OBJ_FLAG_HIDDEN);
+          } else {
+            lv_obj_clear_state(id(${uid}), LV_STATE_CHECKED);
+            lv_obj_add_flag(id(${uid}_badge), LV_OBJ_FLAG_HIDDEN);
+          }
+
+  - id: ${uid}_tap
+    then:
+      - homeassistant.action:
+          action: media_player.select_source
+          data:
+            entity_id: ${entity}
+            source: "${source}"
+      - delay: 600ms
+      - lvgl.page.show:
+          id: ${back_page}
+          animation: NONE

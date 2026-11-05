@@ -1,0 +1,14 @@
+# ---------------------------------------------------------------
+#  Widget data: Status chip — shows the state text of any HA entity
+#  vars: uid, entity
+#  (The HA package provides ready-formatted text sensors for this.)
+# ---------------------------------------------------------------
+text_sensor:
+  - platform: homeassistant
+    id: ${uid}_ha
+    entity_id: ${entity}
+    internal: true
+    on_value:
+      - lvgl.label.update:
+          id: ${uid}_text
+          text: !lambda 'return x;'

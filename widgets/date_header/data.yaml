@@ -1,0 +1,18 @@
+# ---------------------------------------------------------------
+#  Widget data: Date header   vars: uid, time_id
+# ---------------------------------------------------------------
+interval:
+  - interval: 30s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(${time_id}).now().is_valid();'
+          then:
+            - lvgl.label.update:
+                id: ${uid}_weekday
+                text: !lambda 'return std::string(hv::weekday_da_upper(id(${time_id}).now().day_of_week));'
+            - lvgl.label.update:
+                id: ${uid}_date
+                text: !lambda |-
+                  auto t = id(${time_id}).now();
+                  return str_sprintf("%d. %s", t.day_of_month, hv::month_da(t.month));

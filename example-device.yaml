@@ -1,0 +1,81 @@
+#############################################################
+#  EXAMPLE device file — copy to your ESPHome folder as
+#  homeview-<room>.yaml, change the names and entities, and flash.
+#  All shared files are pulled from this repo at homeview_ref.
+#
+#  HomeView — Stue
+#  Room device: the shared HomeView core + the living-room page.
+#
+#  Pages:  Face (clock + weather, calendar, temperature, humidity)
+#          Home (doorbell camera, floor heating, Gulvlamper, Væglys,
+#                window + door status)
+#  When the doorbell rings, the screen wakes and a full-screen camera
+#  view opens on top of whatever page is showing.
+#############################################################
+
+substitutions:
+  # ---- HomeView source (GitHub) ---------------------------------------
+  # Change homeview_ref to update. Pin a release tag (e.g. v2.0.0) so a
+  # push to the repo never changes a device by surprise.
+  homeview_ref: "v2.0.0"
+  homeview_components: "github://briis/homeview-esphome@${homeview_ref}"
+  fonts_dir: "https://raw.githubusercontent.com/briis/homeview-esphome/${homeview_ref}/fonts"
+
+  device_name: homeview-stue
+  friendly_name: HomeView Stue
+  version: "2.0.0"
+  location_name: "Roskilde"
+
+  # How this device reaches Home Assistant (camera snapshots).
+  # Use the IP if .local names don't resolve on your network.
+  ha_url: "http://homeassistant.local:8123"
+
+  # ---- Room ----------------------------------------------------------
+  room_title: "Stue"
+  room_climate_entity: climate.floor_heating_living_room
+  room_light1_entity: light.floor_lamps_living_room
+  room_light1_name: "Gulvlamper"
+  room_light2_entity: light.wall_light_stue
+  room_light2_name: "Væglys"
+  room_camera_entity: camera.doorbell_high_resolution_channel
+  room_camera_name: "Fordør"
+  room_doorbell_entity: binary_sensor.doorbell_doorbell
+  # From homeassistant/homeview_stue.yaml
+  room_climate_text_entity: sensor.homeview_stue_klima_tekst
+  room_window_text_entity: sensor.homeview_stue_vindue_tekst
+  room_door_text_entity: sensor.homeview_stue_dor_tekst
+
+  # ---- Face (shared page) --------------------------------------------
+  weather_entity: weather.wdl_home_weather
+  weather_high_entity: sensor.homeview_vejr_hoj
+  weather_low_entity: sensor.homeview_vejr_lav
+  event_entity: sensor.homeview_naeste_begivenhed
+  face_value1_entity: sensor.homeview_stue_temperatur
+  face_value1_label: "STUE"
+  face_value1_icon: "\U000F050F"        # mdi:thermometer
+  face_value1_color: "0xFF9F0A"
+  face_value1_decimals: "1"
+  face_value1_unit: "°"
+  face_value2_entity: sensor.homeview_stue_fugtighed
+  face_value2_label: "FUGT"
+  face_value2_icon: "\U000F058E"        # mdi:water-percent
+  face_value2_color: "0x64D2FF"
+  face_value2_decimals: "0"
+  face_value2_unit: " %"
+
+# Everything below comes from the repo at homeview_ref. Order matters:
+# hardware, core, then the pages (face first, then the room pages).
+packages:
+  homeview:
+    url: https://github.com/briis/homeview-esphome
+    ref: ${homeview_ref}
+    refresh: 1d
+    files:
+      - packages/hardware/layout-800x480.yaml
+      - packages/hardware/waveshare-s3-touch-lcd-5.yaml
+      - packages/core/base.yaml
+      - packages/core/theme.yaml
+      - packages/core/presence.yaml
+      - packages/sensors/proximity-vl53l0x.yaml
+      - packages/pages/face.yaml
+      - rooms/stue/home.yaml

@@ -1,0 +1,19 @@
+#############################################################
+#  PROXIMITY: re-use an existing Home Assistant presence sensor
+#
+#  Handy before the physical sensor is mounted, or when the room already
+#  has an mmWave sensor (e.g. an ESPHome LD2410 presence node).
+#  Set  proximity_entity  to any binary_sensor / input_boolean.
+#
+#  Provides: binary_sensor id hv_proximity  (contract for presence.yaml)
+#############################################################
+
+substitutions:
+  proximity_entity: binary_sensor.presence_bedroom_presence
+
+binary_sensor:
+  - platform: homeassistant
+    id: hv_proximity
+    entity_id: ${proximity_entity}
+    on_state:
+      - script.execute: homeview_proximity_changed

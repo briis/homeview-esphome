@@ -1,0 +1,190 @@
+# ---------------------------------------------------------------
+#  Widget: Now Playing (Apple Music / Control Center style)
+#  Artwork, title, artist, transport controls, live volume slider and a
+#  radio button that opens a station page.
+#  vars: uid, x, y, width, height, radio_page
+#  Pair with widgets/media_player/data.yaml (same uid).
+# ---------------------------------------------------------------
+obj:
+  id: ${uid}
+  x: ${x}
+  y: ${y}
+  width: ${width}
+  height: ${height}
+  styles: hv_platter
+  pad_all: 20
+  scrollable: false
+  clickable: false
+  widgets:
+    # ---------- Artwork ----------
+    - obj:
+        id: ${uid}_art_box
+        align: TOP_LEFT
+        width: 132
+        height: 132
+        radius: 18
+        bg_color: ${c_platter_2}
+        bg_opa: COVER
+        clip_corner: true
+        clickable: false
+        scrollable: false
+        widgets:
+          - label:
+              id: ${uid}_art_placeholder
+              align: CENTER
+              text: "\U000F0387"
+              text_font: hv_icons_lg
+              text_color: ${c_label_3}
+          - image:
+              id: ${uid}_art
+              align: CENTER
+              src: ${uid}_art_img
+              hidden: true
+
+    # ---------- Radio / source button ----------
+    - button:
+        id: ${uid}_radio_btn
+        align: TOP_RIGHT
+        width: 44
+        height: 44
+        radius: 22
+        bg_color: ${c_platter_2}
+        bg_opa: COVER
+        pressed:
+          bg_color: 0x48484A
+        on_click:
+          - lvgl.page.show:
+              id: ${radio_page}
+              animation: NONE
+        widgets:
+          - label:
+              align: CENTER
+              text: "\U000F0439"
+              text_font: hv_icons_md
+              text_color: ${c_red}
+
+    # ---------- Text ----------
+    - obj:
+        x: 148
+        align: TOP_LEFT
+        width: 130
+        height: 132
+        clickable: false
+        scrollable: false
+        layout:
+          type: FLEX
+          flex_flow: COLUMN
+          pad_row: 4
+        widgets:
+          - label:
+              id: ${uid}_caption
+              text: "SONOS"
+              styles: hv_caption
+          - label:
+              id: ${uid}_title
+              width: 100%
+              long_mode: DOT
+              max_height: 56
+              text: "–"
+              text_font: hv_font_title
+          - label:
+              id: ${uid}_artist
+              width: 100%
+              long_mode: DOT
+              height: 20
+              text: ""
+              text_font: hv_font_footnote
+              text_color: ${c_label_2}
+
+    # ---------- Transport ----------
+    - obj:
+        align: BOTTOM_MID
+        y: -54
+        width: 100%
+        height: 64
+        clickable: false
+        scrollable: false
+        layout:
+          type: FLEX
+          flex_flow: ROW
+          flex_align_main: SPACE_EVENLY
+          flex_align_cross: CENTER
+          flex_align_track: CENTER
+        widgets:
+          - button:
+              id: ${uid}_prev
+              width: 64
+              height: 64
+              radius: 32
+              bg_opa: TRANSP
+              pressed:
+                bg_color: ${c_platter_2}
+                bg_opa: COVER
+              on_click:
+                - script.execute: ${uid}_prev_track
+              widgets:
+                - label: { align: CENTER, text: "\U000F04AE", text_font: hv_icons_lg, text_color: "${c_label}" }
+          - button:
+              id: ${uid}_play
+              width: 64
+              height: 64
+              radius: 32
+              bg_opa: TRANSP
+              pressed:
+                bg_color: ${c_platter_2}
+                bg_opa: COVER
+              on_click:
+                - script.execute: ${uid}_play_pause
+              widgets:
+                - label: { id: "${uid}_play_icon", align: CENTER, text: "\U000F040A", text_font: hv_icons_lg, text_color: "${c_label}" }
+          - button:
+              id: ${uid}_next
+              width: 64
+              height: 64
+              radius: 32
+              bg_opa: TRANSP
+              pressed:
+                bg_color: ${c_platter_2}
+                bg_opa: COVER
+              on_click:
+                - script.execute: ${uid}_next_track
+              widgets:
+                - label: { align: CENTER, text: "\U000F04AD", text_font: hv_icons_lg, text_color: "${c_label}" }
+
+    # ---------- Volume ----------
+    - obj:
+        align: BOTTOM_MID
+        width: 100%
+        height: 34
+        clickable: false
+        scrollable: false
+        layout:
+          type: FLEX
+          flex_flow: ROW
+          flex_align_cross: CENTER
+          flex_align_track: CENTER
+          pad_column: 12
+        widgets:
+          - label: { text: "\U000F057F", text_font: hv_icons_sm, text_color: "${c_label_2}" }
+          - slider:
+              id: ${uid}_volume
+              flex_grow: 1
+              height: 8
+              min_value: 0
+              max_value: 100
+              value: 0
+              bg_color: 0x48484A
+              bg_opa: COVER
+              radius: 4
+              indicator:
+                bg_color: ${c_label}
+                radius: 4
+              knob:
+                bg_color: ${c_label}
+                pad_all: 6
+                radius: 12
+              on_release:
+                - script.execute:
+                    id: ${uid}_set_volume
+                    level: !lambda 'return x;'
+          - label: { text: "\U000F057E", text_font: hv_icons_sm, text_color: "${c_label_2}" }

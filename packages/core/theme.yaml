@@ -1,0 +1,305 @@
+#############################################################
+#  THEME: Apple-style dark design system for LVGL
+#
+#  Reusable in other projects: it only depends on a display with
+#  id "main_display" and a touchscreen with id "main_touch".
+#
+#  Colours follow Apple's dark-mode system palette.
+#  Typography: Inter / Inter Display (open-source, OFL), which is the
+#  closest freely-licensed match to SF Pro / SF Pro Display.
+#############################################################
+
+substitutions:
+  # --- Where the shared files come from --------------------------------
+  # Local checkout: the defaults below. Devices that use this repo as a
+  # remote package override both (see example-device.yaml):
+  #   homeview_components: github://briis/homeview-esphome@<ref>
+  #   fonts_dir: https://raw.githubusercontent.com/briis/homeview-esphome/<ref>/fonts
+  homeview_components: components
+  # --- Apple dark-mode system colours ---------------------------------
+  c_bg: "0x000000"
+  c_platter: "0x1C1C1E"        # secondarySystemBackground
+  c_platter_2: "0x2C2C2E"      # tertiarySystemBackground
+  c_separator: "0x38383A"
+  c_label: "0xFFFFFF"
+  c_label_2: "0x98989F"        # secondaryLabel (EBEBF5 @ 60%)
+  c_label_3: "0x5A5A5F"        # tertiaryLabel
+  c_orange: "0xFF9F0A"
+  c_yellow: "0xFFD60A"
+  c_blue: "0x0A84FF"
+  c_green: "0x30D158"
+  c_red: "0xFF453A"
+  c_teal: "0x64D2FF"
+  c_indigo: "0x5E5CE6"
+  c_purple: "0xBF5AF2"
+  # Home-app "on" tile
+  c_tile_on: "0xF2F2F7"
+  c_tile_on_label: "0x1C1C1E"
+  c_tile_on_label_2: "0x6C6C70"
+  # Night mode tint (multiplied over everything: white -> this colour)
+  c_night_tint: "0xA0140A"
+
+  # --- Geometry ---------------------------------------------------------
+  r_platter: "26"
+  r_tile: "22"
+  r_chip: "22"
+
+  # Font paths are resolved relative to the main device YAML
+  fonts_dir: "fonts"
+
+#############################################################
+#  SHARED C++ HELPERS (components/homeview/homeview_helpers.h)
+#  An external component instead of esphome: includes:, because
+#  includes are resolved relative to the device YAML, which breaks
+#  when this repo is used as a remote package.
+#############################################################
+external_components:
+  - source: ${homeview_components}
+    components: [homeview]
+
+homeview:
+
+#############################################################
+#  FONTS
+#############################################################
+font:
+  # Large title ("Hjem")
+  - id: hv_font_large_title
+    file: ${fonts_dir}/InterDisplay-Bold.otf
+    size: 36
+    glyphsets: [GF_Latin_Core]
+    ignore_missing_glyphs: true   # U+030B is not in Inter
+  # Section / widget titles
+  - id: hv_font_title
+    file: ${fonts_dir}/Inter-SemiBold.otf
+    size: 22
+    glyphsets: [GF_Latin_Core]
+    ignore_missing_glyphs: true   # U+030B is not in Inter
+  # Body text
+  - id: hv_font_body
+    file: ${fonts_dir}/Inter-Medium.otf
+    size: 18
+    glyphsets: [GF_Latin_Core]
+    ignore_missing_glyphs: true   # U+030B is not in Inter
+  # Secondary text
+  - id: hv_font_footnote
+    file: ${fonts_dir}/Inter-Medium.otf
+    size: 15
+    glyphsets: [GF_Latin_Core]
+    ignore_missing_glyphs: true   # U+030B is not in Inter
+  # Small caps style labels (weekday, "I DAG", widget headings)
+  - id: hv_font_caption
+    file: ${fonts_dir}/Inter-Bold.otf
+    size: 14
+    glyphsets: [GF_Latin_Core]
+    ignore_missing_glyphs: true   # U+030B is not in Inter
+  # Date on the face
+  - id: hv_font_date
+    file: ${fonts_dir}/InterDisplay-Medium.otf
+    size: 32
+    glyphsets: [GF_Latin_Core]
+    ignore_missing_glyphs: true   # U+030B is not in Inter
+  # Clock dial numerals
+  - id: hv_font_dial
+    file: ${fonts_dir}/InterDisplay-SemiBold.otf
+    size: 30
+    glyphs: "0123456789"
+  # Large numeric values (weather temperature)
+  - id: hv_font_xl
+    file: ${fonts_dir}/InterDisplay-Light.otf
+    size: 64
+    glyphs: "0123456789-−°,.: "
+  # Medium numeric values (complications, chips)
+  - id: hv_font_value
+    file: ${fonts_dir}/InterDisplay-SemiBold.otf
+    size: 28
+    glyphs: "0123456789-−–°,.:% krWhCmV/"
+  # Large setpoint in the climate dial
+  - id: hv_font_l
+    file: ${fonts_dir}/InterDisplay-SemiBold.otf
+    size: 44
+    glyphs: "0123456789-−°,. "
+  # Digital time in the Home header
+  - id: hv_font_time
+    file: ${fonts_dir}/InterDisplay-SemiBold.otf
+    size: 24
+    glyphs: "0123456789:. "
+
+  # ---- Icons (Material Design Icons 7.x) ------------------------------
+  # Add codepoints here if you configure tiles with other icons.
+  - id: hv_icons_xl
+    file: ${fonts_dir}/materialdesignicons-webfont.ttf
+    size: 60
+    glyphs: &weather_glyphs [
+      "\U000F0599", "\U000F0594", "\U000F0595", "\U000F0F31", "\U000F0590",
+      "\U000F0591", "\U000F0592", "\U000F0593", "\U000F067E", "\U000F0596",
+      "\U000F0597", "\U000F0598", "\U000F067F", "\U000F059D", "\U000F059E",
+      "\U000F0F2F",
+    ]
+  - id: hv_icons_md
+    file: ${fonts_dir}/materialdesignicons-webfont.ttf
+    size: 30
+    glyphs: &ui_glyphs [
+      # weather (also used small)
+      "\U000F0599", "\U000F0594", "\U000F0595", "\U000F0F31", "\U000F0590",
+      "\U000F0591", "\U000F0592", "\U000F0593", "\U000F067E", "\U000F0596",
+      "\U000F0597", "\U000F0598", "\U000F067F", "\U000F059D", "\U000F059E",
+      "\U000F0F2F",
+      # home / accessories
+      "\U000F0335", "\U000F0336", "\U000F1253", "\U000F08DD", "\U000F06B5",
+      "\U000F033E", "\U000F0FC6", "\U000F050F", "\U000F0241", "\U000F00ED",
+      "\U000F02DC", "\U000F0425", "\U000F0210", "\U000F1051", "\U000F0769",
+      "\U000F081A", "\U000F068A", "\U000F05AA", "\U000F058E", "\U000F0502",
+      "\U000F04B9", "\U000F02E3", "\U000F06D9", "\U000F00AC", "\U000F12BA",
+      "\U000F095F", "\U000F140B", "\U000F0F54", "\U000F06E8", "\U000F109F",
+      "\U000F042B", "\U000F0438",
+      # media / climate / navigation
+      "\U000F040A", "\U000F03E4", "\U000F04AE", "\U000F04AD", "\U000F057E",
+      "\U000F057F", "\U000F0581", "\U000F0439", "\U000F0374", "\U000F0415",
+      "\U000F0238", "\U000F0141", "\U000F0142", "\U000F0387", "\U000F11DB",
+      "\U000F11DC", "\U000F04C3", "\U000F05E0", "\U000F075A", "\U000F04DB",
+      # doorbell / doors / lights (Stue)
+      "\U000F091C", "\U000F12E6", "\U000F0869", "\U000F081B", "\U000F081C",
+      "\U000F0156", "\U000F009E",
+      # alarm / keypad / leak (Bryggers)
+      "\U000F099C", "\U000F0565", "\U000F1828", "\U000F099D", "\U000F0ECC",
+      "\U000F0B5C", "\U000F012C", "\U000F1502", "\U000F051F", "\U000F0499", "\U000F058C",
+    ]
+  - id: hv_icons_sm
+    file: ${fonts_dir}/materialdesignicons-webfont.ttf
+    size: 20
+    glyphs: *ui_glyphs
+  # Large transport controls (play/pause/skip) and big placeholders
+  - id: hv_icons_lg
+    file: ${fonts_dir}/materialdesignicons-webfont.ttf
+    size: 48
+    glyphs: ["\U000F040A", "\U000F03E4", "\U000F04AE", "\U000F04AD", "\U000F0387", "\U000F0439", "\U000F0869", "\U000F12E6",
+             "\U000F099C", "\U000F068A", "\U000F1828", "\U000F099D", "\U000F0ECC", "\U000F051F", "\U000F1502", "\U000F0238"]
+
+#############################################################
+#  LVGL BASE
+#############################################################
+lvgl:
+  id: hv_lvgl
+  displays:
+    - main_display
+  touchscreens:
+    - touchscreen_id: main_touch
+      long_press_time: 600ms
+  # 100% = draw buffer always in PSRAM. Anything >= 1/8 screen (e.g. 25%) makes
+  # ESPHome try INTERNAL RAM first, which starves WiFi (esp_wifi_init ESP_ERR_NO_MEM).
+  buffer_size: 100%
+  color_depth: 16
+  log_level: WARN
+  bg_color: ${c_bg}
+  text_font: hv_font_body
+  text_color: ${c_label}
+  default_font: hv_font_body
+  page_wrap: false
+
+  theme:
+    obj:
+      border_width: 0
+      outline_width: 0
+      shadow_width: 0
+      radius: 0
+      pad_all: 0
+      bg_opa: TRANSP
+      text_color: ${c_label}
+    label:
+      text_color: ${c_label}
+      bg_opa: TRANSP
+    button:
+      border_width: 0
+      shadow_width: 0
+      radius: ${r_tile}
+
+  style_definitions:
+    # Page background
+    - id: hv_page
+      bg_color: ${c_bg}
+      bg_opa: COVER
+      pad_all: 0
+    # Widget "platter" (watchOS / iOS widget card)
+    - id: hv_platter
+      bg_color: ${c_platter}
+      bg_opa: COVER
+      radius: ${r_platter}
+      pad_all: 16
+      border_width: 0
+    # Small status chip (Home app header summaries)
+    - id: hv_chip
+      bg_color: ${c_platter_2}
+      bg_opa: COVER
+      radius: ${r_chip}
+      pad_left: 14
+      pad_right: 16
+      pad_top: 8
+      pad_bottom: 8
+    # Accessory tile, OFF state
+    - id: hv_tile_off
+      bg_color: ${c_platter_2}
+      bg_opa: 85%
+      radius: ${r_tile}
+      pad_all: 12
+      text_color: ${c_label}
+    # Accessory tile, ON state (applied as the CHECKED state)
+    - id: hv_tile_on
+      bg_color: ${c_tile_on}
+      bg_opa: COVER
+      text_color: ${c_tile_on_label}
+    # Pressed feedback (subtle shrink like iOS)
+    - id: hv_pressed
+      transform_width: -4
+      transform_height: -4
+    # Upper-case caption label (weekday, widget headers)
+    - id: hv_caption
+      text_font: hv_font_caption
+      text_letter_space: 1
+      text_color: ${c_label_2}
+    - id: hv_secondary
+      text_font: hv_font_footnote
+      text_color: ${c_label_2}
+
+  #############################################################
+  #  TOP LAYER (overlays shared by all pages)
+  #############################################################
+  top_layer:
+    widgets:
+      # Night mode: multiply-blend tint over the whole UI.
+      # Black stays black, white becomes ${c_night_tint} -> StandBy-style red.
+      - obj:
+          id: hv_night_overlay
+          width: 100%
+          height: 100%
+          bg_color: ${c_night_tint}
+          bg_opa: COVER
+          blend_mode: MULTIPLY
+          hidden: true
+          clickable: false
+          scrollable: false
+      # Connection banner
+      - obj:
+          id: hv_status_banner
+          align: TOP_MID
+          y: 10
+          width: SIZE_CONTENT
+          height: SIZE_CONTENT
+          styles: hv_chip
+          bg_color: ${c_red}
+          hidden: true
+          clickable: false
+          scrollable: false
+          layout:
+            type: FLEX
+            flex_flow: ROW
+            flex_align_cross: CENTER
+            pad_column: 8
+          widgets:
+            - label:
+                text: "\U000F05AA"
+                text_font: hv_icons_sm
+            - label:
+                id: hv_status_text
+                text_font: hv_font_footnote
+                text: ""

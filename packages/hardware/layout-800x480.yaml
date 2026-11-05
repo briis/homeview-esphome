@@ -1,0 +1,28 @@
+# Geometry for the 5" 800x480 panel (ESP32-S3-Touch-LCD-5, SKU 28117)
+substitutions:
+  lcd_model: ESP32-S3-TOUCH-LCD-4.3   # same pinout/timing as the 5" 800x480
+  # ---- Face ----
+  face_clock_size: "440"
+  face_clock_x: "20"
+  face_clock_y: "20"
+  face_panel_x: "484"
+  face_panel_w: "296"
+  face_date_y: "22"
+  face_weather_y: "100"
+  face_weather_h: "150"
+  face_event_y: "262"
+  face_event_h: "92"
+  face_values_y: "366"
+  face_values_h: "94"
+  face_value_w: "142"
+  face_value2_x: "638"
+  # ---- Home ----
+  home_margin: "28"
+  home_chips_y: "72"
+  home_body_y: "130"
+  home_body_h: "330"
+  home_stack_w: "300"
+  home_tiles_x: "344"
+  home_tiles_w: "428"
+  home_tile_w: "208"
+  home_tile_h: "102"

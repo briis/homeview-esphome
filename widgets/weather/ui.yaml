@@ -1,0 +1,60 @@
+# ---------------------------------------------------------------
+#  Widget: Weather (Apple Weather widget style)
+#  vars: uid, x, y, width, height, location
+#  Pair with widgets/weather/data.yaml (same uid).
+# ---------------------------------------------------------------
+obj:
+  id: ${uid}
+  x: ${x}
+  y: ${y}
+  width: ${width}
+  height: ${height}
+  styles: hv_platter
+  # Apple's weather widget uses a sky gradient; subtle dark-blue version
+  bg_color: 0x1E3A5F
+  bg_grad_color: 0x0E1B2E
+  bg_grad_dir: VER
+  scrollable: false
+  clickable: false
+  widgets:
+    - label:
+        id: ${uid}_location
+        align: TOP_LEFT
+        text: "${location}"
+        text_font: hv_font_body
+        text_color: ${c_label}
+    - label:
+        id: ${uid}_temp
+        align: BOTTOM_LEFT
+        y: 8
+        text: "--°"
+        text_font: hv_font_xl
+        text_color: ${c_label}
+    - label:
+        id: ${uid}_icon
+        align: TOP_RIGHT
+        text: "\U000F0590"
+        text_font: hv_icons_md
+        text_color: 0xE5E5EA
+    - obj:
+        align: BOTTOM_RIGHT
+        width: SIZE_CONTENT
+        height: SIZE_CONTENT
+        scrollable: false
+        clickable: false
+        layout:
+          type: FLEX
+          flex_flow: COLUMN
+          flex_align_cross: END
+          pad_row: 0
+        widgets:
+          - label:
+              id: ${uid}_condition
+              text: ""
+              text_font: hv_font_footnote
+              text_color: ${c_label}
+          - label:
+              id: ${uid}_hilo
+              text: ""
+              text_font: hv_font_footnote
+              text_color: 0xB8C4D6

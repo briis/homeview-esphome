@@ -1,0 +1,73 @@
+# ---------------------------------------------------------------
+#  Widget data: Lock tile
+#  vars: uid, entity
+#  locked   -> light tile, teal badge, "Låst"
+#  unlocked -> dark tile, orange badge, "Ulåst"
+# ---------------------------------------------------------------
+text_sensor:
+  - platform: homeassistant
+    id: ${uid}_ha
+    entity_id: ${entity}
+    internal: true
+    on_value:
+      - script.execute:
+          id: ${uid}_render
+          state: !lambda 'return x;'
+
+script:
+  - id: ${uid}_render
+    parameters:
+      state: std::string
+    then:
+      - lambda: |-
+          const bool locked = (state == "locked");
+          const bool busy = (state == "locking" || state == "unlocking" || state == "opening");
+          const bool avail = !(state == "unavailable" || state == "unknown" || state.empty());
+          lv_obj_t *tile = id(${uid});
+          if (locked) lv_obj_add_state(tile, LV_STATE_CHECKED);
+          else        lv_obj_clear_state(tile, LV_STATE_CHECKED);
+          lv_obj_set_style_opa(tile, avail ? LV_OPA_COVER : LV_OPA_50, LV_PART_MAIN);
+          lv_obj_set_style_bg_color(id(${uid}_badge),
+              lv_color_hex(locked ? 0x30B0C7 : (avail ? ${c_orange} : 0x48484A)), LV_PART_MAIN);
+          lv_label_set_text(id(${uid}_icon), locked ? "\U000F033E" : "\U000F0FC6");
+          lv_obj_set_style_text_color(id(${uid}_name), lv_color_hex(locked ? ${c_tile_on_label} : ${c_label}), LV_PART_MAIN);
+          lv_obj_set_style_text_color(id(${uid}_state), lv_color_hex(locked ? ${c_tile_on_label_2} : ${c_label_2}), LV_PART_MAIN);
+          const char *txt = !avail ? "Ikke tilgængelig" : busy ? "Arbejder..." : locked ? "Låst" : "Ulåst";
+          lv_label_set_text(id(${uid}_state), txt);
+
+  - id: ${uid}_tap
+    then:
+      - if:
+          condition:
+            lambda: 'return id(${uid}_ha).state == "unlocked";'
+          then:
+            - script.execute:
+                id: ${uid}_render
+                state: "locking"
+            - homeassistant.action:
+                action: lock.lock
+                data:
+                  entity_id: ${entity}
+          else:
+            # Locked: explain the gesture instead of acting
+            - lvgl.label.update:
+                id: ${uid}_state
+                text: "Hold for at låse op"
+            - delay: 2s
+            - script.execute:
+                id: ${uid}_render
+                state: !lambda 'return id(${uid}_ha).state;'
+
+  - id: ${uid}_long_press
+    then:
+      - if:
+          condition:
+            lambda: 'return id(${uid}_ha).state == "locked";'
+          then:
+            - script.execute:
+                id: ${uid}_render
+                state: "unlocking"
+            - homeassistant.action:
+                action: lock.unlock
+                data:
+                  entity_id: ${entity}

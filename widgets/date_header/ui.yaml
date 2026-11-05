@@ -1,0 +1,28 @@
+# ---------------------------------------------------------------
+#  Widget: Date header — orange weekday caption + large date
+#  vars: uid, x, y, width
+# ---------------------------------------------------------------
+obj:
+  id: ${uid}
+  x: ${x}
+  y: ${y}
+  width: ${width}
+  height: SIZE_CONTENT
+  scrollable: false
+  clickable: false
+  layout:
+    type: FLEX
+    flex_flow: COLUMN
+    pad_row: 2
+  widgets:
+    - label:
+        id: ${uid}_weekday
+        text: ""
+        styles: hv_caption
+        text_color: ${c_orange}
+        text_font: hv_font_title
+    - label:
+        id: ${uid}_date
+        text: ""
+        text_font: hv_font_date
+        text_color: ${c_label}

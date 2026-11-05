@@ -1,0 +1,155 @@
+# ---------------------------------------------------------------
+#  Widget: Alarm panel card
+#  Big status (icon, state, detail line). Disarmed: two arm buttons
+#  (Nat / Ude) that ask for confirmation (confirm.yaml), no PIN.
+#  Armed: one "Frakobl" button that opens the PIN keypad (keypad.yaml).
+#  Both dialogs go on the top layer.
+#  vars: uid, x, y, width, height
+#  Pair with widgets/alarm_panel/data.yaml + keypad.yaml + confirm.yaml (same uid).
+# ---------------------------------------------------------------
+obj:
+  id: ${uid}
+  x: ${x}
+  y: ${y}
+  width: ${width}
+  height: ${height}
+  styles: hv_platter
+  scrollable: false
+  clickable: false
+  widgets:
+    - label:
+        x: 0
+        y: 0
+        text: "ALARM"
+        styles: hv_caption
+    # icon in a tinted circle
+    - obj:
+        id: ${uid}_badge
+        x: 0
+        y: 30
+        width: 76
+        height: 76
+        radius: 38
+        bg_color: 0x8E8E93
+        bg_opa: 20%
+        clickable: false
+        scrollable: false
+        widgets:
+          - label:
+              id: ${uid}_icon
+              align: CENTER
+              text: "\U000F0499"
+              text_font: hv_icons_lg
+              text_color: 0x8E8E93
+    - label:
+        id: ${uid}_title
+        x: 0
+        y: 118
+        width: 100%
+        long_mode: DOT
+        text: "–"
+        text_font: hv_font_large_title
+    - label:
+        id: ${uid}_sub
+        x: 0
+        y: 164
+        width: 100%
+        long_mode: DOT
+        text: ""
+        styles: hv_secondary
+    # ---------- disarmed: arm buttons ----------
+    - obj:
+        id: ${uid}_arm_row
+        align: BOTTOM_LEFT
+        width: 100%
+        height: 72
+        clickable: false
+        scrollable: false
+        layout:
+          type: FLEX
+          flex_flow: ROW
+          pad_column: 10
+        widgets:
+          - button:
+              flex_grow: 1
+              height: 72
+              styles: hv_tile_off
+              pad_all: 4
+              pressed:
+                transform_width: -4
+                transform_height: -4
+              disabled:
+                bg_opa: 40%
+              on_click:
+                - script.execute:
+                    id: ${uid}_confirm
+                    command: "arm_night"
+              layout:
+                type: FLEX
+                flex_flow: COLUMN
+                flex_align_main: CENTER
+                flex_align_cross: CENTER
+                flex_align_track: CENTER
+                pad_row: 2
+              widgets:
+                - label:
+                    text: "\U000F1828"
+                    text_font: hv_icons_md
+                - label:
+                    text: "Nat"
+                    text_font: hv_font_footnote
+          - button:
+              flex_grow: 1
+              height: 72
+              styles: hv_tile_off
+              pad_all: 4
+              pressed:
+                transform_width: -4
+                transform_height: -4
+              disabled:
+                bg_opa: 40%
+              on_click:
+                - script.execute:
+                    id: ${uid}_confirm
+                    command: "arm_away"
+              layout:
+                type: FLEX
+                flex_flow: COLUMN
+                flex_align_main: CENTER
+                flex_align_cross: CENTER
+                flex_align_track: CENTER
+                pad_row: 2
+              widgets:
+                - label:
+                    text: "\U000F099D"
+                    text_font: hv_icons_md
+                - label:
+                    text: "Ude"
+                    text_font: hv_font_footnote
+    # ---------- armed: disarm button ----------
+    - button:
+        id: ${uid}_disarm_btn
+        align: BOTTOM_LEFT
+        width: 100%
+        height: 72
+        styles: hv_tile_off
+        hidden: true
+        pressed:
+          transform_width: -4
+          transform_height: -4
+        on_click:
+          - script.execute: ${uid}_kp_show
+        layout:
+          type: FLEX
+          flex_flow: ROW
+          flex_align_main: CENTER
+          flex_align_cross: CENTER
+          flex_align_track: CENTER
+          pad_column: 10
+        widgets:
+          - label:
+              text: "\U000F099C"
+              text_font: hv_icons_md
+          - label:
+              text: "Frakobl"
+              text_font: hv_font_title

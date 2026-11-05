@@ -1,0 +1,27 @@
+# ---------------------------------------------------------------
+#  Widget: Status chip (Home app header summary: "Klima", "Lys", "Låse")
+#  vars: uid, icon, icon_color
+#  Place inside a FLEX row container.
+# ---------------------------------------------------------------
+obj:
+  id: ${uid}
+  width: SIZE_CONTENT
+  height: 44
+  styles: hv_chip
+  scrollable: false
+  clickable: false
+  layout:
+    type: FLEX
+    flex_flow: ROW
+    flex_align_cross: CENTER
+    pad_column: 8
+  widgets:
+    - label:
+        text: "${icon}"
+        text_font: hv_icons_sm
+        text_color: ${icon_color}
+    - label:
+        id: ${uid}_text
+        text: "–"
+        text_font: hv_font_footnote
+        text_color: ${c_label}

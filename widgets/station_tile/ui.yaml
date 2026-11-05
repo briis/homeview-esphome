@@ -1,0 +1,59 @@
+# ---------------------------------------------------------------
+#  Widget: Radio station tile (Apple Music radio style gradient card)
+#  The station currently playing gets a white ring + "SPILLER" badge.
+#  vars: uid, width, height, label, color_top, color_bottom
+#  Pair with widgets/station_tile/data.yaml (same uid).
+# ---------------------------------------------------------------
+button:
+  id: ${uid}
+  width: ${width}
+  height: ${height}
+  radius: ${r_tile}
+  pad_all: 14
+  bg_color: ${color_top}
+  bg_grad_color: ${color_bottom}
+  bg_grad_dir: VER
+  bg_opa: COVER
+  border_width: 0
+  border_color: 0xFFFFFF
+  scrollable: false
+  checked:
+    border_width: 3
+  pressed:
+    transform_width: -4
+    transform_height: -4
+  on_click:
+    - script.execute: ${uid}_tap
+  widgets:
+    - label:
+        align: TOP_LEFT
+        text: "\U000F0439"
+        text_font: hv_icons_md
+        text_color: 0xFFFFFF
+    - obj:
+        id: ${uid}_badge
+        align: TOP_RIGHT
+        width: SIZE_CONTENT
+        height: SIZE_CONTENT
+        radius: 10
+        pad_left: 8
+        pad_right: 8
+        pad_top: 3
+        pad_bottom: 3
+        bg_color: 0xFFFFFF
+        bg_opa: COVER
+        hidden: true
+        clickable: false
+        scrollable: false
+        widgets:
+          - label:
+              text: "SPILLER"
+              text_font: hv_font_caption
+              text_color: 0x000000
+    - label:
+        align: BOTTOM_LEFT
+        width: 100%
+        long_mode: DOT
+        text: "${label}"
+        text_font: hv_font_title
+        text_color: 0xFFFFFF

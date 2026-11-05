@@ -1,0 +1,53 @@
+# ---------------------------------------------------------------
+#  Widget data: Alert overlay — full-screen warning while a binary
+#  sensor is on (water leak, smoke, ...). Wakes the screen.
+#  vars: uid, entity, remind_minutes
+#    "Luk" hides it; if the sensor is still on after remind_minutes
+#    it comes back. It disappears by itself when the sensor turns off.
+#  Pair with widgets/alert_overlay/overlay.yaml (same uid).
+# ---------------------------------------------------------------
+globals:
+  # millis() when a dismissed alert should come back (0 = not dismissed)
+  - id: ${uid}_remind_at
+    type: uint32_t
+    initial_value: "0"
+
+binary_sensor:
+  - platform: homeassistant
+    id: ${uid}_ha
+    entity_id: ${entity}
+    internal: true
+    on_press:
+      - script.execute: ${uid}_show
+    on_release:
+      - lambda: |-
+          id(${uid}_remind_at) = 0;
+          lv_obj_add_flag(id(${uid}_overlay), LV_OBJ_FLAG_HIDDEN);
+
+script:
+  - id: ${uid}_show
+    then:
+      - script.execute: homeview_user_activity
+      - lambda: |-
+          id(${uid}_remind_at) = 0;
+          lv_obj_clear_flag(id(${uid}_overlay), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_move_foreground(id(${uid}_overlay));
+
+  - id: ${uid}_dismiss
+    then:
+      - lambda: |-
+          id(${uid}_remind_at) = millis() + ${remind_minutes} * 60000UL;
+          if (id(${uid}_remind_at) == 0) id(${uid}_remind_at) = 1;
+          lv_obj_add_flag(id(${uid}_overlay), LV_OBJ_FLAG_HIDDEN);
+      - script.execute: homeview_user_activity
+
+interval:
+  - interval: 10s
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return id(${uid}_ha).state && id(${uid}_remind_at) != 0 &&
+                     (int32_t) (millis() - id(${uid}_remind_at)) > 0;
+          then:
+            - script.execute: ${uid}_show

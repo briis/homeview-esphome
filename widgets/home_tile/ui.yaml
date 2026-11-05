@@ -1,0 +1,68 @@
+# ---------------------------------------------------------------
+#  Widget: Accessory tile (Apple Home app, iOS 18 style)
+#  OFF = dark translucent tile, ON = light tile with coloured icon badge.
+#  vars: uid, width, height, name, icon, on_color
+#  Pair with widgets/home_tile/data.yaml (same uid).
+# ---------------------------------------------------------------
+button:
+  id: ${uid}
+  width: ${width}
+  height: ${height}
+  styles: hv_tile_off
+  scrollable: false
+  checked:
+    bg_color: ${c_tile_on}
+    bg_opa: COVER
+  pressed:
+    transform_width: -4
+    transform_height: -4
+  # Compact Home-tile layout: icon badge left, name + status stacked right
+  layout:
+    type: FLEX
+    flex_flow: ROW
+    flex_align_cross: CENTER
+    flex_align_track: CENTER
+    pad_column: 12
+  on_click:
+    - script.execute: ${uid}_tap
+  widgets:
+    - obj:
+        id: ${uid}_badge
+        width: 44
+        height: 44
+        radius: 22
+        bg_color: 0x48484A
+        bg_opa: COVER
+        clickable: false
+        scrollable: false
+        widgets:
+          - label:
+              id: ${uid}_icon
+              align: CENTER
+              text: "${icon}"
+              text_font: hv_icons_md
+              text_color: 0xD1D1D6
+    - obj:
+        flex_grow: 1
+        height: SIZE_CONTENT
+        clickable: false
+        scrollable: false
+        layout:
+          type: FLEX
+          flex_flow: COLUMN
+          pad_row: 2
+        widgets:
+          - label:
+              id: ${uid}_name
+              width: 100%
+              long_mode: DOT
+              text: "${name}"
+              text_font: hv_font_body
+              text_color: ${c_label}
+          - label:
+              id: ${uid}_state
+              width: 100%
+              long_mode: DOT
+              text: "–"
+              text_font: hv_font_footnote
+              text_color: ${c_label_2}

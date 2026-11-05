@@ -1,0 +1,18 @@
+# ---------------------------------------------------------------
+#  Widget data: Page header   vars: uid, time_id
+# ---------------------------------------------------------------
+interval:
+  - interval: 5s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(${time_id}).now().is_valid();'
+          then:
+            - lvgl.label.update:
+                id: ${uid}_date
+                text: !lambda |-
+                  auto t = id(${time_id}).now();
+                  return str_sprintf("%s %d. %s", hv::weekday_da_upper(t.day_of_week), t.day_of_month, hv::month_da_short_upper(t.month));
+            - lvgl.label.update:
+                id: ${uid}_time
+                text: !lambda 'return id(${time_id}).now().strftime("%H:%M");'

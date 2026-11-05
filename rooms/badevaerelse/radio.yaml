@@ -1,0 +1,100 @@
+#############################################################
+#  ROOM: Badeværelse — Radio page (page id: radio_page)
+#  Opened from the radio button on the Now Playing card.
+#  Each tile selects a Sonos favourite by its exact source_list name.
+#############################################################
+
+substitutions:
+  radio_tile_w: "177"
+  radio_tile_h: "170"
+
+packages:
+  st1_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st1, entity: "${room_media_entity}", source: "DR P1", back_page: home_page } }
+  st2_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st2, entity: "${room_media_entity}", source: "DR P2", back_page: home_page } }
+  st3_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st3, entity: "${room_media_entity}", source: "DR P3", back_page: home_page } }
+  st4_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st4, entity: "${room_media_entity}", source: "DR P4 København", back_page: home_page } }
+  st5_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st5, entity: "${room_media_entity}", source: "DR P5 Sjælland", back_page: home_page } }
+  st6_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st6, entity: "${room_media_entity}", source: "Piano Blues", back_page: home_page } }
+  st7_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st7, entity: "${room_media_entity}", source: "Radio Soft", back_page: home_page } }
+
+lvgl:
+  pages:
+    - id: radio_page
+      styles: hv_page
+      scrollable: false
+      on_swipe_right:
+        - lvgl.page.show:
+            id: home_page
+            animation: NONE
+      widgets:
+        # ---------- Header with back button ----------
+        - button:
+            x: 16
+            y: 14
+            width: SIZE_CONTENT
+            height: 48
+            bg_opa: TRANSP
+            pad_left: 6
+            pad_right: 10
+            on_click:
+              - lvgl.page.show:
+                  id: home_page
+                  animation: NONE
+            layout:
+              type: FLEX
+              flex_flow: ROW
+              flex_align_cross: CENTER
+              flex_align_track: CENTER
+              pad_column: 2
+            widgets:
+              - label: { text: "\U000F0141", text_font: hv_icons_md, text_color: "${c_red}" }
+              - label: { text: "${room_title}", text_font: hv_font_body, text_color: "${c_red}" }
+        - label:
+            align: TOP_MID
+            y: 22
+            text: "Radio"
+            text_font: hv_font_title
+
+        # ---------- Station grid ----------
+        - obj:
+            x: 28
+            y: 92
+            width: 744
+            height: 364
+            scrollable: false
+            clickable: false
+            layout:
+              type: FLEX
+              flex_flow: ROW_WRAP
+              pad_row: 12
+              pad_column: 12
+            widgets:
+              - !include { file: ../../widgets/station_tile/ui.yaml, vars: { uid: st1, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "DR P1", color_top: "0x0A84FF", color_bottom: "0x003A8C" } }
+              - !include { file: ../../widgets/station_tile/ui.yaml, vars: { uid: st2, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "DR P2", color_top: "0xBF5AF2", color_bottom: "0x4E1F75" } }
+              - !include { file: ../../widgets/station_tile/ui.yaml, vars: { uid: st3, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "DR P3", color_top: "0xFF375F", color_bottom: "0x7A0F28" } }
+              - !include { file: ../../widgets/station_tile/ui.yaml, vars: { uid: st4, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "DR P4", color_top: "0xFF9F0A", color_bottom: "0x8A4200" } }
+              - !include { file: ../../widgets/station_tile/ui.yaml, vars: { uid: st5, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "DR P5", color_top: "0x30D158", color_bottom: "0x0D5A23" } }
+              - !include { file: ../../widgets/station_tile/ui.yaml, vars: { uid: st6, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "Piano Blues", color_top: "0x5E5CE6", color_bottom: "0x201F6E" } }
+              - !include { file: ../../widgets/station_tile/ui.yaml, vars: { uid: st7, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "Radio Soft", color_top: "0x64D2FF", color_bottom: "0x135B7A" } }
+              # Stop tile
+              - button:
+                  width: ${radio_tile_w}
+                  height: ${radio_tile_h}
+                  radius: ${r_tile}
+                  pad_all: 14
+                  bg_color: ${c_platter_2}
+                  bg_opa: COVER
+                  pressed:
+                    transform_width: -4
+                    transform_height: -4
+                  on_click:
+                    - homeassistant.action:
+                        action: media_player.media_pause
+                        data:
+                          entity_id: ${room_media_entity}
+                    - lvgl.page.show:
+                        id: home_page
+                        animation: NONE
+                  widgets:
+                    - label: { align: TOP_LEFT, text: "\U000F04DB", text_font: hv_icons_md, text_color: "${c_label}" }
+                    - label: { align: BOTTOM_LEFT, text: "Stop", text_font: hv_font_title }

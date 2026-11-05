@@ -1,0 +1,174 @@
+# ---------------------------------------------------------------
+#  Widget data: Smart Stack
+#  vars: uid, time_id, weather_entity, high_entity, low_entity,
+#        event_entity, price_entity, price_level_entity, price_cheapest_entity,
+#        rotate_seconds
+# ---------------------------------------------------------------
+globals:
+  - id: ${uid}_index
+    type: int
+    initial_value: "0"
+  - id: ${uid}_hold
+    type: uint32_t
+    initial_value: "0"
+
+script:
+  - id: ${uid}_show
+    parameters:
+      idx: int
+    then:
+      - lambda: |-
+          lv_obj_t *cards[3] = { id(${uid}_card0), id(${uid}_card1), id(${uid}_card2) };
+          lv_obj_t *dots[3]  = { id(${uid}_dot0),  id(${uid}_dot1),  id(${uid}_dot2) };
+          idx = ((idx % 3) + 3) % 3;
+          id(${uid}_index) = idx;
+          for (int i = 0; i < 3; i++) {
+            if (i == idx) {
+              lv_obj_clear_flag(cards[i], LV_OBJ_FLAG_HIDDEN);
+              lv_obj_fade_in(cards[i], 350, 0);
+            } else {
+              lv_obj_add_flag(cards[i], LV_OBJ_FLAG_HIDDEN);
+            }
+            lv_obj_set_style_bg_opa(dots[i], i == idx ? LV_OPA_COVER : LV_OPA_40, LV_PART_MAIN);
+          }
+
+  - id: ${uid}_hilo
+    then:
+      - lvgl.label.update:
+          id: ${uid}_w_hilo
+          text: !lambda |-
+            if (std::isnan(id(${uid}_w_high_ha).state) || std::isnan(id(${uid}_w_low_ha).state)) return std::string("");
+            return "H:" + hv::fmt_da(id(${uid}_w_high_ha).state, 0) + "°  L:" + hv::fmt_da(id(${uid}_w_low_ha).state, 0) + "°";
+
+  - id: ${uid}_step
+    parameters:
+      delta: int
+    then:
+      - lambda: 'id(${uid}_hold) = millis();'
+      - script.execute:
+          id: ${uid}_show
+          idx: !lambda 'return id(${uid}_index) + delta;'
+
+interval:
+  - interval: ${rotate_seconds}s
+    then:
+      # Don't rotate right after a manual swipe
+      - if:
+          condition:
+            lambda: 'return millis() - id(${uid}_hold) > 30000;'
+          then:
+            - script.execute:
+                id: ${uid}_show
+                idx: !lambda 'return id(${uid}_index) + 1;'
+  - interval: 60s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(${time_id}).now().is_valid();'
+          then:
+            - lvgl.label.update:
+                id: ${uid}_c_weekday
+                text: !lambda 'return std::string(hv::weekday_da_upper(id(${time_id}).now().day_of_week));'
+            - lvgl.label.update:
+                id: ${uid}_c_day
+                text: !lambda 'return to_string(id(${time_id}).now().day_of_month);'
+
+text_sensor:
+  # ---- weather ----
+  - platform: homeassistant
+    id: ${uid}_w_cond_ha
+    entity_id: ${weather_entity}
+    internal: true
+    on_value:
+      - lvgl.label.update:
+          id: ${uid}_w_icon
+          text: !lambda 'return std::string(hv::weather_icon(x));'
+          text_color: !lambda 'return lv_color_hex(hv::weather_color(x));'
+      - lvgl.label.update:
+          id: ${uid}_w_cond
+          text: !lambda 'return std::string(hv::weather_text_da(x));'
+  # ---- calendar ----
+  - platform: homeassistant
+    id: ${uid}_c_agenda_ha
+    entity_id: ${event_entity}
+    attribute: agenda
+    internal: true
+    on_value:
+      - lvgl.label.update:
+          id: ${uid}_c_agenda
+          text: !lambda 'return x.empty() ? std::string("Ingen begivenheder") : x;'
+  # ---- electricity ----
+  - platform: homeassistant
+    id: ${uid}_e_level_ha
+    entity_id: ${price_level_entity}
+    internal: true
+    on_value:
+      - lambda: |-
+          const uint32_t c = hv::price_color(x);
+          lv_obj_set_style_bg_color(id(${uid}_e_level_pill), lv_color_hex(c), LV_PART_MAIN);
+          lv_obj_set_style_text_color(id(${uid}_e_level), lv_color_hex(c), LV_PART_MAIN);
+          lv_obj_set_style_text_color(id(${uid}_e_price), lv_color_hex(c), LV_PART_MAIN);
+          lv_label_set_text(id(${uid}_e_level), x == "low" ? "Lav pris" : (x == "high" ? "Høj pris" : "Middel pris"));
+  - platform: homeassistant
+    id: ${uid}_e_cheapest_ha
+    entity_id: ${price_cheapest_entity}
+    internal: true
+    on_value:
+      - lvgl.label.update:
+          id: ${uid}_e_cheapest
+          text: !lambda 'return x;'
+
+sensor:
+  - platform: homeassistant
+    id: ${uid}_w_temp_ha
+    entity_id: ${weather_entity}
+    attribute: temperature
+    internal: true
+    filters: [filter_out: nan]
+    on_value:
+      - lvgl.label.update:
+          id: ${uid}_w_temp
+          text: !lambda 'return hv::fmt_da(x, 0) + "°";'
+  - platform: homeassistant
+    id: ${uid}_w_hum_ha
+    entity_id: ${weather_entity}
+    attribute: humidity
+    internal: true
+    filters: [filter_out: nan]
+    on_value:
+      - lvgl.label.update:
+          id: ${uid}_w_hum
+          text: !lambda 'return hv::fmt_da(x, 0) + "%";'
+  - platform: homeassistant
+    id: ${uid}_w_wind_ha
+    entity_id: ${weather_entity}
+    attribute: wind_speed
+    internal: true
+    filters: [filter_out: nan]
+    on_value:
+      - lvgl.label.update:
+          id: ${uid}_w_wind
+          text: !lambda 'return hv::fmt_da(x, 0) + " m/s";'
+  - platform: homeassistant
+    id: ${uid}_w_high_ha
+    entity_id: ${high_entity}
+    internal: true
+    filters: [filter_out: nan]
+    on_value:
+      - script.execute: ${uid}_hilo
+  - platform: homeassistant
+    id: ${uid}_w_low_ha
+    entity_id: ${low_entity}
+    internal: true
+    filters: [filter_out: nan]
+    on_value:
+      - script.execute: ${uid}_hilo
+  - platform: homeassistant
+    id: ${uid}_e_price_ha
+    entity_id: ${price_entity}
+    internal: true
+    filters: [filter_out: nan]
+    on_value:
+      - lvgl.label.update:
+          id: ${uid}_e_price
+          text: !lambda 'return hv::fmt_da(x, 2);'

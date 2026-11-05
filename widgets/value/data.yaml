@@ -1,0 +1,16 @@
+# ---------------------------------------------------------------
+#  Widget data: Single value complication
+#  vars: uid, entity, decimals, unit
+#  Formats with Danish decimal comma, e.g. 21,5°  or  3,12 kr
+# ---------------------------------------------------------------
+sensor:
+  - platform: homeassistant
+    id: ${uid}_ha
+    entity_id: ${entity}
+    internal: true
+    filters:
+      - filter_out: nan
+    on_value:
+      - lvgl.label.update:
+          id: ${uid}_value
+          text: !lambda 'return hv::fmt_da(x, ${decimals}) + "${unit}";'

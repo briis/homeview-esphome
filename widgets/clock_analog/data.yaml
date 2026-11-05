@@ -1,0 +1,50 @@
+# ---------------------------------------------------------------
+#  Widget data: Analog clock
+#  packages:
+#    face_clock: !include
+#      file: widgets/clock_analog/data.yaml
+#      vars: { uid: face_clock, time_id: hv_time }
+# ---------------------------------------------------------------
+switch:
+  - platform: template
+    id: ${uid}_show_seconds
+    name: "Vis sekundviser"
+    icon: mdi:timer-outline
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    entity_category: config
+    on_turn_on:
+      - lvgl.widget.show: ${uid}_second
+    on_turn_off:
+      - lvgl.widget.hide: ${uid}_second
+
+interval:
+  - interval: 1s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(${time_id}).now().is_valid();'
+          then:
+            - lvgl.indicator.update:
+                id: ${uid}_second
+                value: !lambda 'return id(${time_id}).now().second;'
+            - lvgl.indicator.update:
+                id: ${uid}_minute
+                value: !lambda |-
+                  auto t = id(${time_id}).now();
+                  return t.minute * 60 + t.second;
+            - lvgl.indicator.update:
+                id: ${uid}_minute_stem
+                value: !lambda |-
+                  auto t = id(${time_id}).now();
+                  return t.minute * 60 + t.second;
+            - lvgl.indicator.update:
+                id: ${uid}_hour
+                value: !lambda |-
+                  auto t = id(${time_id}).now();
+                  return (t.hour % 12) * 60 + t.minute;
+            - lvgl.indicator.update:
+                id: ${uid}_hour_stem
+                value: !lambda |-
+                  auto t = id(${time_id}).now();
+                  return (t.hour % 12) * 60 + t.minute;

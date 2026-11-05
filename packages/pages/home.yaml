@@ -1,0 +1,175 @@
+#############################################################
+#  PAGE: Home — Apple Home-app style dashboard
+#  Large title, status chips, Smart Stack, accessory tiles.
+#  Tiles are configured with the tileN_* substitutions in the
+#  device file (entity, name, icon, colour, action).
+#############################################################
+
+packages:
+
+  chip_climate_data: !include
+    file: ../../widgets/status_chip/data.yaml
+    vars: { uid: chip_climate, entity: "${chip_climate_entity}" }
+  chip_lights_data: !include
+    file: ../../widgets/status_chip/data.yaml
+    vars: { uid: chip_lights, entity: "${chip_lights_entity}" }
+  chip_locks_data: !include
+    file: ../../widgets/status_chip/data.yaml
+    vars: { uid: chip_locks, entity: "${chip_locks_entity}" }
+
+  stack_data: !include
+    file: ../../widgets/smart_stack/data.yaml
+    vars:
+      uid: stack
+      time_id: hv_time
+      weather_entity: ${weather_entity}
+      high_entity: ${weather_high_entity}
+      low_entity: ${weather_low_entity}
+      event_entity: ${event_entity}
+      price_entity: ${price_entity}
+      price_level_entity: ${price_level_entity}
+      price_cheapest_entity: ${price_cheapest_entity}
+      rotate_seconds: "12"
+
+  tile1_data: !include
+    file: ../../widgets/home_tile/data.yaml
+    vars: { uid: tile1, entity: "${tile1_entity}", on_color: "${tile1_color}", toggle_action: "${tile1_action}", on_text: "Til", off_text: "Fra" }
+  tile2_data: !include
+    file: ../../widgets/home_tile/data.yaml
+    vars: { uid: tile2, entity: "${tile2_entity}", on_color: "${tile2_color}", toggle_action: "${tile2_action}", on_text: "Til", off_text: "Fra" }
+  tile3_data: !include
+    file: ../../widgets/home_tile/data.yaml
+    vars: { uid: tile3, entity: "${tile3_entity}", on_color: "${tile3_color}", toggle_action: "${tile3_action}", on_text: "Til", off_text: "Fra" }
+  tile4_data: !include
+    file: ../../widgets/home_tile/data.yaml
+    vars: { uid: tile4, entity: "${tile4_entity}", on_color: "${tile4_color}", toggle_action: "${tile4_action}", on_text: "Til", off_text: "Fra" }
+  tile5_data: !include
+    file: ../../widgets/home_tile/data.yaml
+    vars: { uid: tile5, entity: "${tile5_entity}", on_color: "${tile5_color}", toggle_action: "${tile5_action}", on_text: "Til", off_text: "Fra" }
+  lock1_data: !include
+    file: ../../widgets/lock_tile/data.yaml
+    vars: { uid: lock1, entity: "${lock1_entity}" }
+
+interval:
+  - interval: 5s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(hv_time).now().is_valid();'
+          then:
+            - lvgl.label.update:
+                id: home_date_weekday
+                text: !lambda |-
+                  auto t = id(hv_time).now();
+                  return str_sprintf("%s %d. %s", hv::weekday_da_upper(t.day_of_week), t.day_of_month, hv::month_da_short_upper(t.month));
+            - lvgl.label.update:
+                id: home_date_time
+                text: !lambda 'return id(hv_time).now().strftime("%H:%M");'
+
+lvgl:
+  pages:
+    - id: home_page
+      styles: hv_page
+      scrollable: false
+      on_swipe_right:
+        - script.execute: homeview_user_activity
+        - script.execute: homeview_show_face
+      widgets:
+        # ---------- Header ----------
+        - label:
+            x: ${home_margin}
+            y: 14
+            text: "${home_title}"
+            text_font: hv_font_large_title
+        # Weekday + digital time top-right (tap = back to the face)
+        - obj:
+            align: TOP_RIGHT
+            x: -${home_margin}
+            y: 16
+            width: SIZE_CONTENT
+            height: SIZE_CONTENT
+            scrollable: false
+            on_click:
+              - script.execute: homeview_show_face
+            layout:
+              type: FLEX
+              flex_flow: COLUMN
+              flex_align_cross: END
+              pad_row: 0
+            widgets:
+              - label:
+                  id: home_date_weekday
+                  text: ""
+                  styles: hv_caption
+                  text_color: ${c_orange}
+              - label:
+                  id: home_date_time
+                  text: ""
+                  text_font: hv_font_large_title
+
+        # ---------- Status chips ----------
+        - obj:
+            x: ${home_margin}
+            y: ${home_chips_y}
+            width: SIZE_CONTENT
+            height: SIZE_CONTENT
+            scrollable: false
+            clickable: false
+            layout:
+              type: FLEX
+              flex_flow: ROW
+              pad_column: 10
+            widgets:
+              - !include
+                file: ../../widgets/status_chip/ui.yaml
+                vars: { uid: chip_climate, icon: "\U000F050F", icon_color: "${c_orange}" }
+              - !include
+                file: ../../widgets/status_chip/ui.yaml
+                vars: { uid: chip_lights, icon: "\U000F0335", icon_color: "${c_yellow}" }
+              - !include
+                file: ../../widgets/status_chip/ui.yaml
+                vars: { uid: chip_locks, icon: "\U000F033E", icon_color: "0x30B0C7" }
+
+        # ---------- Smart Stack ----------
+        - !include
+          file: ../../widgets/smart_stack/ui.yaml
+          vars:
+            uid: stack
+            x: ${home_margin}
+            y: ${home_body_y}
+            width: ${home_stack_w}
+            height: ${home_body_h}
+            location: ${location_name}
+
+        # ---------- Accessory tiles ----------
+        - obj:
+            x: ${home_tiles_x}
+            y: ${home_body_y}
+            width: ${home_tiles_w}
+            height: ${home_body_h}
+            scrollable: false
+            clickable: false
+            layout:
+              type: FLEX
+              flex_flow: ROW_WRAP
+              pad_row: 12
+              pad_column: 12
+            widgets:
+              - !include
+                file: ../../widgets/home_tile/ui.yaml
+                vars: { uid: tile1, width: "${home_tile_w}", height: "${home_tile_h}", name: "${tile1_name}", icon: "${tile1_icon}", on_color: "${tile1_color}" }
+              - !include
+                file: ../../widgets/home_tile/ui.yaml
+                vars: { uid: tile2, width: "${home_tile_w}", height: "${home_tile_h}", name: "${tile2_name}", icon: "${tile2_icon}", on_color: "${tile2_color}" }
+              - !include
+                file: ../../widgets/home_tile/ui.yaml
+                vars: { uid: tile3, width: "${home_tile_w}", height: "${home_tile_h}", name: "${tile3_name}", icon: "${tile3_icon}", on_color: "${tile3_color}" }
+              - !include
+                file: ../../widgets/home_tile/ui.yaml
+                vars: { uid: tile4, width: "${home_tile_w}", height: "${home_tile_h}", name: "${tile4_name}", icon: "${tile4_icon}", on_color: "${tile4_color}" }
+              - !include
+                file: ../../widgets/home_tile/ui.yaml
+                vars: { uid: tile5, width: "${home_tile_w}", height: "${home_tile_h}", name: "${tile5_name}", icon: "${tile5_icon}", on_color: "${tile5_color}" }
+              - !include
+                file: ../../widgets/lock_tile/ui.yaml
+                vars: { uid: lock1, width: "${home_tile_w}", height: "${home_tile_h}", name: "${lock1_name}" }

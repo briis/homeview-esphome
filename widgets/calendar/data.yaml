@@ -1,0 +1,22 @@
+# ---------------------------------------------------------------
+#  Widget data: Next calendar event
+#  vars: uid, event_entity  (sensor.homeview_naeste_begivenhed from the HA package)
+# ---------------------------------------------------------------
+text_sensor:
+  - platform: homeassistant
+    id: ${uid}_title_ha
+    entity_id: ${event_entity}
+    internal: true
+    on_value:
+      - lvgl.label.update:
+          id: ${uid}_title
+          text: !lambda 'return x;'
+  - platform: homeassistant
+    id: ${uid}_when_ha
+    entity_id: ${event_entity}
+    attribute: when
+    internal: true
+    on_value:
+      - lvgl.label.update:
+          id: ${uid}_when
+          text: !lambda 'return x;'

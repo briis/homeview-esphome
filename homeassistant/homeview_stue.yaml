@@ -1,0 +1,46 @@
+#############################################################
+#  HomeView – Stue (HA package)
+#  Put next to homeview.yaml in /config/packages/
+#  The floor-heating thermostat also reports room temperature + humidity.
+#############################################################
+
+template:
+  - sensor:
+      - name: "HomeView Stue Temperatur"
+        unique_id: homeview_stue_temperature
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        state: >
+          {{ state_attr('climate.floor_heating_living_room', 'current_temperature') | float(none) }}
+        availability: >
+          {{ state_attr('climate.floor_heating_living_room', 'current_temperature') is number }}
+
+      - name: "HomeView Stue Fugtighed"
+        unique_id: homeview_stue_humidity
+        unit_of_measurement: "%"
+        device_class: humidity
+        state_class: measurement
+        state: >
+          {{ state_attr('climate.floor_heating_living_room', 'current_humidity') | float(none) }}
+        availability: >
+          {{ state_attr('climate.floor_heating_living_room', 'current_humidity') is number }}
+
+      - name: "HomeView Stue Klima Tekst"
+        unique_id: homeview_stue_climate_text
+        state: >
+          {% set t = state_attr('climate.floor_heating_living_room', 'current_temperature') %}
+          {% set h = state_attr('climate.floor_heating_living_room', 'current_humidity') %}
+          {% if t is number %}{{ ('%.1f' | format(t)).replace('.', ',') }}°{% else %}–{% endif %}{% if h is number %} · {{ h | round(0) | int }} % fugt{% endif %}
+
+      - name: "HomeView Stue Vindue Tekst"
+        unique_id: homeview_stue_window_text
+        state: >
+          {% set s = states('binary_sensor.lumi_lumi_magnet_agl02') %}
+          {{ 'Vindue åbent' if s == 'on' else 'Vindue lukket' if s == 'off' else 'Vindue ukendt' }}
+
+      - name: "HomeView Stue Dør Tekst"
+        unique_id: homeview_stue_door_text
+        state: >
+          {% set s = states('binary_sensor.door_sensor_living_room_dor') %}
+          {{ 'Dør åben' if s == 'on' else 'Dør lukket' if s == 'off' else 'Dør ukendt' }}

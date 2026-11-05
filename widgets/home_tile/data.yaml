@@ -1,0 +1,48 @@
+# ---------------------------------------------------------------
+#  Widget data: Accessory tile
+#  vars: uid, entity, on_color, toggle_action (e.g. light.toggle, switch.toggle,
+#        fan.toggle, input_boolean.toggle), on_text, off_text
+#
+#  Requires "Allow the device to perform Home Assistant actions"
+#  to be enabled on the ESPHome integration.
+# ---------------------------------------------------------------
+text_sensor:
+  - platform: homeassistant
+    id: ${uid}_ha
+    entity_id: ${entity}
+    internal: true
+    on_value:
+      - script.execute:
+          id: ${uid}_render
+          state: !lambda 'return x;'
+
+script:
+  - id: ${uid}_render
+    parameters:
+      state: std::string
+    then:
+      - lambda: |-
+          const bool on = (state == "on");
+          const bool avail = !(state == "unavailable" || state == "unknown" || state.empty());
+          lv_obj_t *tile = id(${uid});
+          if (on) lv_obj_add_state(tile, LV_STATE_CHECKED);
+          else    lv_obj_clear_state(tile, LV_STATE_CHECKED);
+          lv_obj_set_style_opa(tile, avail ? LV_OPA_COVER : LV_OPA_50, LV_PART_MAIN);
+          // Badge + icon
+          lv_obj_set_style_bg_color(id(${uid}_badge), on ? lv_color_hex(${on_color}) : lv_color_hex(0x48484A), LV_PART_MAIN);
+          lv_obj_set_style_text_color(id(${uid}_icon), on ? lv_color_hex(0xFFFFFF) : lv_color_hex(0xD1D1D6), LV_PART_MAIN);
+          // Text colours flip on the light tile
+          lv_obj_set_style_text_color(id(${uid}_name), on ? lv_color_hex(${c_tile_on_label}) : lv_color_hex(${c_label}), LV_PART_MAIN);
+          lv_obj_set_style_text_color(id(${uid}_state), on ? lv_color_hex(${c_tile_on_label_2}) : lv_color_hex(${c_label_2}), LV_PART_MAIN);
+          lv_label_set_text(id(${uid}_state), !avail ? "Ikke tilgængelig" : (on ? "${on_text}" : "${off_text}"));
+
+  # Called from the tile's on_click: optimistic flip + HA action
+  - id: ${uid}_tap
+    then:
+      - script.execute:
+          id: ${uid}_render
+          state: !lambda 'return lv_obj_has_state(id(${uid}), LV_STATE_CHECKED) ? std::string("off") : std::string("on");'
+      - homeassistant.action:
+          action: ${toggle_action}
+          data:
+            entity_id: ${entity}

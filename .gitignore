@@ -1,0 +1,12 @@
+# ESPHome build output and secrets
+/.esphome/
+/secrets.yaml
+# Room device files live in your own ESPHome folder (see example-device.yaml)
+/homeview-*.yaml
+!/homeview.yaml
+!/homeview-bringup.yaml
+# Station logos are not distributed with the repo
+/images/
+__pycache__/
+.DS_Store
+._*

@@ -1,0 +1,92 @@
+#############################################################
+#  HARDWARE: Waveshare ESP32-S3-Touch-LCD-5 / -5B
+#
+#  - ESP32-S3-WROOM-1-N16R8 (16 MB flash, 8 MB octal PSRAM)
+#  - 16-bit RGB panel  -> display: mipi_rgb
+#  - GT911 capacitive touch (I2C, INT=GPIO4, RST=CH422G EXIO1)
+#  - CH422G IO expander (I2C) drives LCD reset, backlight (DISP), touch reset
+#
+#  Substitutions expected (with defaults in homeview.yaml):
+#    lcd_model:  ESP32-S3-TOUCH-LCD-4.3   -> 5"  800x480  (SKU 28117)
+#                WAVESHARE-5-1024X600     -> 5B 1024x600  (SKU 28151)
+#    The 800x480 5" panel uses the same pinout and timing as the 4.3"
+#    board, so ESPHome's built-in 4.3 model is used for it.
+#
+#  NOTE: Backlight on this board is ON/OFF only (CH422G EXIO2 "DISP"),
+#  there is no PWM dimming. "Night mode" is therefore done in software
+#  (see packages/core/presence.yaml -> multiply-blend overlay).
+#############################################################
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  flash_size: 16MB
+  cpu_frequency: 240MHz
+  framework:
+    type: esp-idf
+    advanced:
+      # Keeps the RGB panel from tearing/flickering while flash is busy (OTA, NVS writes)
+      execute_from_psram: true
+      # The board's 16 MB flash is a GigaDevice (GD) chip. Naming it drops the
+      # other vendors' flash drivers and frees IRAM (ESPHome boot hint).
+      flash_chip: gd
+    sdkconfig_options:
+      CONFIG_ESP32S3_DATA_CACHE_64KB: y
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: y
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+i2c:
+  - id: bus_a
+    sda: GPIO8
+    scl: GPIO9
+    scan: true
+    frequency: 400kHz
+
+ch422g:
+  - id: ch422g_hub
+    i2c_id: bus_a
+
+display:
+  - platform: mipi_rgb
+    id: main_display
+    model: ${lcd_model}
+    update_interval: never
+    auto_clear_enabled: false
+    # Override the model's enable pin so the backlight can ALSO be driven by
+    # the "Screen" light below (allow_other_uses).
+    enable_pin:
+      ch422g: ch422g_hub
+      number: 2
+      allow_other_uses: true
+
+touchscreen:
+  - platform: gt911
+    id: main_touch
+    display: main_display
+    i2c_id: bus_a
+    interrupt_pin: GPIO4
+    reset_pin:
+      ch422g: ch422g_hub
+      number: 1
+    on_touch:
+      # Any touch counts as "interaction" for the presence state machine
+      - script.execute: homeview_user_activity
+
+output:
+  - platform: gpio
+    id: backlight_output
+    pin:
+      ch422g: ch422g_hub
+      number: 2
+      allow_other_uses: true
+
+light:
+  - platform: binary
+    id: screen_backlight
+    name: "Skærm"
+    icon: mdi:monitor
+    output: backlight_output
+    restore_mode: ALWAYS_ON

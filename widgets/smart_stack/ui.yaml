@@ -1,0 +1,215 @@
+# ---------------------------------------------------------------
+#  Widget: Smart Stack (rotating large widget, like iOS / watchOS)
+#  Cards: Weather, Calendar, Electricity price. Auto-rotates; swipe
+#  up/down to flip manually. Vertical page dots on the right edge.
+#  vars: uid, x, y, width, height, location
+# ---------------------------------------------------------------
+obj:
+  id: ${uid}
+  x: ${x}
+  y: ${y}
+  width: ${width}
+  height: ${height}
+  styles: hv_platter
+  pad_all: 0
+  scrollable: false
+  on_swipe_up:
+    - script.execute:
+        id: ${uid}_step
+        delta: 1
+  on_swipe_down:
+    - script.execute:
+        id: ${uid}_step
+        delta: -1
+  widgets:
+    #################### Card 0: Weather ####################
+    - obj:
+        id: ${uid}_card0
+        width: 100%
+        height: 100%
+        pad_all: 20
+        radius: ${r_platter}
+        bg_color: 0x1E3A5F
+        bg_grad_color: 0x0E1B2E
+        bg_grad_dir: VER
+        bg_opa: COVER
+        clickable: false
+        scrollable: false
+        widgets:
+          - label:
+              align: TOP_LEFT
+              text: "${location}"
+              text_font: hv_font_title
+          - label:
+              id: ${uid}_w_temp
+              align: TOP_LEFT
+              y: 26
+              text: "--°"
+              text_font: hv_font_xl
+          - label:
+              id: ${uid}_w_icon
+              align: TOP_LEFT
+              y: 118
+              text: "\U000F0590"
+              text_font: hv_icons_md
+          - label:
+              id: ${uid}_w_cond
+              align: TOP_LEFT
+              y: 156
+              text: ""
+              text_font: hv_font_body
+          - label:
+              id: ${uid}_w_hilo
+              align: TOP_LEFT
+              y: 180
+              text: ""
+              text_font: hv_font_footnote
+              text_color: 0xB8C4D6
+          - obj:
+              align: BOTTOM_LEFT
+              width: 100%
+              height: SIZE_CONTENT
+              clickable: false
+              scrollable: false
+              layout:
+                type: FLEX
+                flex_flow: ROW
+                flex_align_cross: CENTER
+                pad_column: 6
+              widgets:
+                - label:
+                    text: "\U000F058E"
+                    text_font: hv_icons_sm
+                    text_color: ${c_teal}
+                - label:
+                    id: ${uid}_w_hum
+                    text: "–"
+                    text_font: hv_font_footnote
+                - label:
+                    text: "\U000F059D"
+                    text_font: hv_icons_sm
+                    text_color: 0xB8C4D6
+                    pad_left: 12
+                - label:
+                    id: ${uid}_w_wind
+                    text: "–"
+                    text_font: hv_font_footnote
+
+    #################### Card 1: Calendar ####################
+    - obj:
+        id: ${uid}_card1
+        width: 100%
+        height: 100%
+        pad_all: 20
+        hidden: true
+        clickable: false
+        scrollable: false
+        widgets:
+          - label:
+              id: ${uid}_c_weekday
+              align: TOP_LEFT
+              text: ""
+              styles: hv_caption
+              text_color: ${c_red}
+          - label:
+              id: ${uid}_c_day
+              align: TOP_LEFT
+              y: 16
+              text: ""
+              text_font: hv_font_xl
+          - label:
+              id: ${uid}_c_agenda
+              align: TOP_LEFT
+              y: 104
+              width: 100%
+              long_mode: CLIP
+              text: ""
+              text_font: hv_font_footnote
+              text_line_space: 8
+
+    #################### Card 2: Electricity ####################
+    - obj:
+        id: ${uid}_card2
+        width: 100%
+        height: 100%
+        pad_all: 20
+        hidden: true
+        clickable: false
+        scrollable: false
+        widgets:
+          - obj:
+              align: TOP_LEFT
+              width: SIZE_CONTENT
+              height: SIZE_CONTENT
+              clickable: false
+              scrollable: false
+              layout:
+                type: FLEX
+                flex_flow: ROW
+                flex_align_cross: CENTER
+                pad_column: 6
+              widgets:
+                - label:
+                    text: "\U000F0241"
+                    text_font: hv_icons_sm
+                    text_color: ${c_yellow}
+                - label:
+                    text: "ELPRIS NU"
+                    styles: hv_caption
+          - label:
+              id: ${uid}_e_price
+              align: TOP_LEFT
+              y: 26
+              text: "–"
+              text_font: hv_font_xl
+          - label:
+              align: TOP_LEFT
+              y: 104
+              text: "kr/kWh"
+              styles: hv_secondary
+          - obj:
+              id: ${uid}_e_level_pill
+              align: TOP_LEFT
+              y: 140
+              width: SIZE_CONTENT
+              height: SIZE_CONTENT
+              radius: 14
+              pad_left: 12
+              pad_right: 12
+              pad_top: 5
+              pad_bottom: 5
+              bg_color: ${c_yellow}
+              bg_opa: 25%
+              clickable: false
+              scrollable: false
+              widgets:
+                - label:
+                    id: ${uid}_e_level
+                    text: "Middel"
+                    text_font: hv_font_footnote
+                    text_color: ${c_yellow}
+          - label:
+              id: ${uid}_e_cheapest
+              align: BOTTOM_LEFT
+              width: 100%
+              long_mode: DOT
+              text: ""
+              text_font: hv_font_footnote
+              text_color: ${c_label_2}
+
+    #################### Page dots ####################
+    - obj:
+        align: RIGHT_MID
+        x: -8
+        width: SIZE_CONTENT
+        height: SIZE_CONTENT
+        clickable: false
+        scrollable: false
+        layout:
+          type: FLEX
+          flex_flow: COLUMN
+          pad_row: 5
+        widgets:
+          - obj: { id: "${uid}_dot0", width: 6, height: 6, radius: 3, bg_color: 0xFFFFFF, bg_opa: COVER, clickable: false }
+          - obj: { id: "${uid}_dot1", width: 6, height: 6, radius: 3, bg_color: 0xFFFFFF, bg_opa: 35%, clickable: false }
+          - obj: { id: "${uid}_dot2", width: 6, height: 6, radius: 3, bg_color: 0xFFFFFF, bg_opa: 35%, clickable: false }

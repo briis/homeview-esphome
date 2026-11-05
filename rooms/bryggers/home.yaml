@@ -1,0 +1,169 @@
+#############################################################
+#  ROOM: Bryggers — Home page (page id: home_page)
+#
+#   ┌ Bryggers ────────────────────────────── TORSDAG 5. NOV. 13:53 ┐
+#   │ [27,2° · 25 %] [Dør lukket] [Vindue lukket] [Salt 80 %]        │
+#   │ ┌ ALARM ─────────────────┐ ┌ Gulvvarme ────────────────────┐  │
+#   │ │ (shield)               │ │  (dial)    status  [−] [+]    │  │
+#   │ │ Frakoblet              │ │            [preset]           │  │
+#   │ │ Huset er ikke sikret   │ └───────────────────────────────┘  │
+#   │ │ [   Nat   ] [   Ude  ] │ [🔒 Fordør     ] [💡 Loftslys    ] │
+#   │ └────────────────────────┘                                    │
+#   └───────────────────────────────────────────────────────────────┘
+#  Top layer: arm confirmation, alarm PIN keypad, water-leak alert, fire alert.
+#  Geometry is for 800x480 (5" and 4.3B).
+#############################################################
+
+packages:
+  bry_header_data: !include
+    file: ../../widgets/page_header/data.yaml
+    vars: { uid: bry_header, time_id: hv_time }
+  bry_chip_climate_data: !include
+    file: ../../widgets/status_chip/data.yaml
+    vars: { uid: bry_chip_climate, entity: "${room_climate_text_entity}" }
+  bry_chip_door_data: !include
+    file: ../../widgets/status_chip/data.yaml
+    vars: { uid: bry_chip_door, entity: "${room_door_text_entity}" }
+  bry_chip_window_data: !include
+    file: ../../widgets/status_chip/data.yaml
+    vars: { uid: bry_chip_window, entity: "${room_window_text_entity}" }
+  bry_chip_salt_data: !include
+    file: ../../widgets/status_chip/data.yaml
+    vars: { uid: bry_chip_salt, entity: "${room_salt_text_entity}" }
+  bry_alarm_data: !include
+    file: ../../widgets/alarm_panel/data.yaml
+    vars:
+      uid: bry_alarm
+      entity: ${room_alarm_entity}
+      script: ${room_alarm_script}
+      failures_entity: ${room_alarm_failures_entity}
+      lockout_entity: ${room_alarm_lockout_entity}
+      exit_seconds: "45"
+      max_attempts: "3"
+  bry_heat_data: !include
+    file: ../../widgets/climate_dial/data.yaml
+    vars:
+      uid: bry_heat
+      entity: ${room_climate_entity}
+      min_half: "30"
+      max_half: "60"
+      preset_on: constant_temperature
+      preset_off: default
+      preset_on_label: "Konstant"
+      preset_off_label: "Program"
+  bry_lock_data: !include
+    file: ../../widgets/lock_tile/data.yaml
+    vars: { uid: bry_lock, entity: "${room_lock_entity}" }
+  bry_light_data: !include
+    file: ../../widgets/home_tile/data.yaml
+    vars: { uid: bry_light, entity: "${room_light_entity}", on_color: "0xFFB300", toggle_action: light.toggle, on_text: "Til", off_text: "Fra" }
+  bry_leak_data: !include
+    file: ../../widgets/alert_overlay/data.yaml
+    vars: { uid: bry_leak, entity: "${room_leak_entity}", remind_minutes: "10" }
+  bry_fire_data: !include
+    file: ../../widgets/alert_overlay/data.yaml
+    vars: { uid: bry_fire, entity: "${room_fire_entity}", remind_minutes: "5" }
+
+lvgl:
+  top_layer:
+    widgets:
+      - !include
+        file: ../../widgets/alarm_panel/keypad.yaml
+        vars: { uid: bry_alarm }
+      - !include
+        file: ../../widgets/alarm_panel/confirm.yaml
+        vars: { uid: bry_alarm }
+      - !include
+        file: ../../widgets/alert_overlay/overlay.yaml
+        vars:
+          uid: bry_leak
+          icon: "\U000F1502"
+          color: "0x0A84FF"
+          title: "Vand i bryggers"
+          message: "Vandsensoren i bryggerset registrerer vand. Tjek gulvet ved vandinstallationerne."
+      - !include
+        file: ../../widgets/alert_overlay/overlay.yaml
+        vars:
+          uid: bry_fire
+          icon: "\U000F0238"
+          color: "0xFF453A"
+          title: "Brandalarm"
+          message: "Alarmsystemet melder brand. Forlad huset og ring 112."
+
+  pages:
+    - id: home_page
+      styles: hv_page
+      scrollable: false
+      on_swipe_right:
+        - script.execute: homeview_user_activity
+        - script.execute: homeview_show_face
+      widgets:
+        - !include
+          file: ../../widgets/page_header/ui.yaml
+          vars: { uid: bry_header, title: "${room_title}", margin: 28 }
+
+        # ---------- Status chips ----------
+        - obj:
+            x: 28
+            y: 72
+            width: SIZE_CONTENT
+            height: SIZE_CONTENT
+            scrollable: false
+            clickable: false
+            layout:
+              type: FLEX
+              flex_flow: ROW
+              pad_column: 10
+            widgets:
+              - !include
+                file: ../../widgets/status_chip/ui.yaml
+                vars: { uid: bry_chip_climate, icon: "\U000F058E", icon_color: "${c_teal}" }
+              - !include
+                file: ../../widgets/status_chip/ui.yaml
+                vars: { uid: bry_chip_door, icon: "\U000F081B", icon_color: "${c_label_2}" }
+              - !include
+                file: ../../widgets/status_chip/ui.yaml
+                vars: { uid: bry_chip_window, icon: "\U000F11DB", icon_color: "${c_label_2}" }
+              - !include
+                file: ../../widgets/status_chip/ui.yaml
+                vars: { uid: bry_chip_salt, icon: "\U000F058C", icon_color: "${c_label_2}" }
+
+        # ---------- Alarm ----------
+        - !include
+          file: ../../widgets/alarm_panel/ui.yaml
+          vars: { uid: bry_alarm, x: 28, y: 130, width: 372, height: 328 }
+
+        # ---------- Floor heating ----------
+        - !include
+          file: ../../widgets/climate_dial/ui.yaml
+          vars:
+            uid: bry_heat
+            x: 412
+            y: 130
+            width: 360
+            height: 216
+            title: "Gulvvarme"
+            min_half: "30"
+            max_half: "60"
+            preset_on_label: "Konstant"
+            preset_off_label: "Program"
+
+        # ---------- Lock + light ----------
+        - obj:
+            x: 412
+            y: 358
+            width: 360
+            height: 100
+            scrollable: false
+            clickable: false
+            layout:
+              type: FLEX
+              flex_flow: ROW
+              pad_column: 12
+            widgets:
+              - !include
+                file: ../../widgets/lock_tile/ui.yaml
+                vars: { uid: bry_lock, width: 174, height: 100, name: "${room_lock_name}" }
+              - !include
+                file: ../../widgets/home_tile/ui.yaml
+                vars: { uid: bry_light, width: 174, height: 100, name: "${room_light_name}", icon: "\U000F0769", on_color: "0xFFB300" }

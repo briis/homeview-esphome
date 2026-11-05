@@ -1,0 +1,205 @@
+#############################################################
+#  HomeView – Home Assistant backend package
+#
+#  Put this file in  /config/packages/homeview.yaml  and make sure
+#  configuration.yaml contains:
+#
+#    homeassistant:
+#      packages: !include_dir_named packages
+#
+#  HA does the "smart" work (forecast, agenda, summaries, Danish text);
+#  the display only renders ready-made values. That keeps the ESPHome
+#  side small and lets you change logic without reflashing.
+#############################################################
+
+template:
+  ###########################################################
+  # Weather: today's high/low (forecasts are only available
+  # through the weather.get_forecasts action)
+  ###########################################################
+  - trigger:
+      - trigger: homeassistant
+        event: start
+      - trigger: event
+        event_type: event_template_reloaded
+      - trigger: time_pattern
+        minutes: /20
+    action:
+      - action: weather.get_forecasts
+        target:
+          entity_id: weather.wdl_home_weather
+        data:
+          type: daily
+        response_variable: hv_daily
+    sensor:
+      - name: "HomeView Vejr Høj"
+        unique_id: homeview_weather_high
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state: >
+          {{ hv_daily['weather.wdl_home_weather'].forecast[0].temperature | round(0) }}
+      - name: "HomeView Vejr Lav"
+        unique_id: homeview_weather_low
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state: >
+          {% set f = hv_daily['weather.wdl_home_weather'].forecast[0] %}
+          {{ (f.templow if f.templow is defined else f.temperature) | round(0) }}
+
+  ###########################################################
+  # Calendar: next event + short agenda
+  ###########################################################
+  - trigger:
+      - trigger: homeassistant
+        event: start
+      - trigger: event
+        event_type: event_template_reloaded
+      - trigger: time_pattern
+        minutes: /5
+    action:
+      - action: calendar.get_events
+        target:
+          entity_id:
+            - calendar.proton_bjarne
+            - calendar.affalddk_holmeengen_15
+        data:
+          duration:
+            hours: 72
+        response_variable: hv_cal
+    sensor:
+      - name: "HomeView Næste Begivenhed"
+        unique_id: homeview_next_event
+        icon: mdi:calendar
+        state: >
+          {% set ns = namespace(ev=[]) %}
+          {% for c in hv_cal.values() %}{% for e in c.events %}
+            {% if as_timestamp(e.end) > as_timestamp(now()) %}{% set ns.ev = ns.ev + [e] %}{% endif %}
+          {% endfor %}{% endfor %}
+          {% set ev = ns.ev | sort(attribute='start') %}
+          {{ (ev[0].summary if ev | count > 0 else 'Ingen begivenheder')[:60] }}
+        attributes:
+          when: >
+            {% set ns = namespace(ev=[]) %}
+            {% for c in hv_cal.values() %}{% for e in c.events %}
+              {% if as_timestamp(e.end) > as_timestamp(now()) %}{% set ns.ev = ns.ev + [e] %}{% endif %}
+            {% endfor %}{% endfor %}
+            {% set ev = ns.ev | sort(attribute='start') %}
+            {% if ev | count == 0 %}DE NÆSTE 3 DAGE{% else %}
+              {% set e = ev[0] %}{% set allday = 'T' not in e.start %}
+              {% set s = (as_datetime(e.start ~ 'T00:00:00') if allday else as_datetime(e.start) | as_local) %}
+              {% set d = (s.date() - now().date()).days %}
+              {% set days = ['MANDAG','TIRSDAG','ONSDAG','TORSDAG','FREDAG','LØRDAG','SØNDAG'] %}
+              {{ 'I DAG' if d <= 0 else ('I MORGEN' if d == 1 else days[s.weekday()]) }} · {{ 'HELE DAGEN' if allday else s.strftime('%H:%M') }}
+            {% endif %}
+          agenda: >
+            {% set ns = namespace(ev=[]) %}
+            {% for c in hv_cal.values() %}{% for e in c.events %}
+              {% if as_timestamp(e.end) > as_timestamp(now()) %}{% set ns.ev = ns.ev + [e] %}{% endif %}
+            {% endfor %}{% endfor %}
+            {% set ev = ns.ev | sort(attribute='start') %}
+            {% set days = ['Man','Tir','Ons','Tor','Fre','Lør','Søn'] %}
+            {% for e in ev[:4] %}
+              {%- set allday = 'T' not in e.start -%}
+              {%- set s = (as_datetime(e.start ~ 'T00:00:00') if allday else as_datetime(e.start) | as_local) -%}
+              {%- set d = (s.date() - now().date()).days -%}
+              {{ ('I dag' if d <= 0 else ('I morgen' if d == 1 else days[s.weekday()])) }} {{ 'hele dagen' if allday else s.strftime('%H:%M') }}  {{ e.summary[:28] }}
+            {% endfor %}
+
+  ###########################################################
+  # Summaries for the Home page status chips
+  ###########################################################
+  - sensor:
+      - name: "HomeView Indetemperatur"
+        unique_id: homeview_indoor_temperature
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state: >
+          {{ state_attr('climate.floor_heating_living_room', 'current_temperature') | float(0) | round(1) }}
+
+      - name: "HomeView Klima Tekst"
+        unique_id: homeview_climate_text
+        state: >
+          {{ (state_attr('climate.floor_heating_living_room', 'current_temperature') | float(0) | round(1) | string).replace('.', ',') }}° inde
+
+      - name: "HomeView Lys Tekst"
+        unique_id: homeview_lights_text
+        state: >
+          {% set ignore = ['light.home_assistant_connect_zwa_2_led', 'light.home_assistant_voice_093e49_led_ring',
+                           'light.smlight_slzb_06m', 'light.alarm_lights', 'light.bedtime_lights'] %}
+          {% set n = states.light | rejectattr('entity_id', 'in', ignore) | selectattr('state', 'eq', 'on') | list | count %}
+          {{ 'Alt lys slukket' if n == 0 else (n ~ ' lys tændt') }}
+
+      - name: "HomeView Låse Tekst"
+        unique_id: homeview_locks_text
+        state: >
+          {% set locks = ['lock.doorlock_frontdoor', 'lock.doorlock_office_dorlas_anneks_bjarnes_kontor', 'lock.lock_shed'] %}
+          {% set n = expand(locks) | selectattr('state', 'eq', 'unlocked') | list | count %}
+          {{ 'Alle låst' if n == 0 else (n ~ ' ulåst') }}
+
+  ###########################################################
+  # Electricity (stromligning)
+  ###########################################################
+  - sensor:
+      - name: "HomeView Elpris Niveau"
+        unique_id: homeview_price_level
+        # low / mid / high relative to the rest of today
+        state: >
+          {% set p = states('sensor.stromligning_current_price_vat') | float(0) %}
+          {% set prices = state_attr('sensor.stromligning_current_price_vat', 'prices') | default([], true) | map(attribute='price') | list %}
+          {% if prices | count == 0 %}mid{% else %}
+            {% set lo = prices | min %}{% set hi = prices | max %}{% set t = (p - lo) / ((hi - lo) if hi > lo else 1) %}
+            {{ 'low' if t < 0.33 else ('high' if t > 0.66 else 'mid') }}
+          {% endif %}
+      - name: "HomeView Elpris Billigst"
+        unique_id: homeview_price_cheapest
+        state: >
+          {% set ns = namespace(best=none) %}
+          {% for x in state_attr('sensor.stromligning_current_price_vat', 'prices') | default([], true) %}
+            {% if as_timestamp(x.end) > as_timestamp(now()) and (ns.best is none or x.price < ns.best.price) %}
+              {% set ns.best = x %}
+            {% endif %}
+          {% endfor %}
+          {% if ns.best is none %}–{% else %}
+            Billigst kl. {{ as_local(as_datetime(ns.best.start)).strftime('%H') }} · {{ ('%.2f' | format(ns.best.price)).replace('.', ',') }} kr
+          {% endif %}
+
+#############################################################
+#  Media helper used by the Now Playing widget's ⏮ / ⏭ buttons.
+#  Radio streams can't skip, so on radio we step through the player's
+#  source_list (Sonos favourites); otherwise we skip tracks.
+#############################################################
+script:
+  homeview_media_skip:
+    alias: "HomeView: næste/forrige"
+    mode: queued
+    fields:
+      player:
+        description: media_player entity
+      direction:
+        description: "next or prev"
+    sequence:
+      - variables:
+          sources: "{{ state_attr(player, 'source_list') or [] }}"
+          channel: "{{ state_attr(player, 'media_channel') or '' }}"
+          is_radio: "{{ channel | length > 0 and sources | count > 0 }}"
+      - if:
+          - condition: template
+            value_template: "{{ is_radio }}"
+        then:
+          - variables:
+              new_source: >
+                {% set ns = namespace(i=-1) %}
+                {% for s in sources %}
+                  {% if s.startswith(channel) or channel.startswith(s) %}{% set ns.i = loop.index0 %}{% endif %}
+                {% endfor %}
+                {% set step = 1 if direction == 'next' else -1 %}
+                {{ sources[(ns.i + step) % (sources | count)] if ns.i >= 0 else sources[0] }}
+          - action: media_player.select_source
+            target:
+              entity_id: "{{ player }}"
+            data:
+              source: "{{ new_source }}"
+        else:
+          - action: "{{ 'media_player.media_next_track' if direction == 'next' else 'media_player.media_previous_track' }}"
+            target:
+              entity_id: "{{ player }}"

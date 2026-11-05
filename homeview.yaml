@@ -1,0 +1,98 @@
+#############################################################
+#  HomeView for ESPHome
+#  An Apple HomeView-inspired smart display on the
+#  Waveshare ESP32-S3-Touch-LCD-5, with Home Assistant as backend.
+#
+#  Everything is modular:
+#    packages/hardware  board + screen-size geometry
+#    packages/core      networking, Apple-style theme, presence logic
+#    packages/sensors   pick ONE proximity sensor package
+#    packages/pages     Face (always-on clock) and Home (dashboard)
+#    widgets/*          reusable widgets: ui.yaml + data.yaml pairs
+#    homeassistant/     HA package that feeds the display
+#############################################################
+
+substitutions:
+  device_name: homeview
+  friendly_name: HomeView
+  version: "1.0.0"
+  location_name: "Roskilde"
+
+  # ---- Weather / calendar / energy (HA entities) -------------------
+  weather_entity: weather.wdl_home_weather
+  weather_high_entity: sensor.homeview_vejr_hoj          # from homeassistant/homeview.yaml
+  weather_low_entity: sensor.homeview_vejr_lav
+  event_entity: sensor.homeview_naeste_begivenhed
+  price_entity: sensor.stromligning_current_price_vat
+  price_level_entity: sensor.homeview_elpris_niveau
+  price_cheapest_entity: sensor.homeview_elpris_billigst
+
+  # ---- Face: the two small complications ---------------------------
+  face_value1_entity: sensor.homeview_indetemperatur
+  face_value1_label: "INDE"
+  face_value1_icon: "\U000F050F"        # mdi:thermometer
+  face_value1_color: "0xFF9F0A"
+  face_value1_decimals: "1"
+  face_value1_unit: "°"
+  face_value2_entity: sensor.stromligning_current_price_vat
+  face_value2_label: "ELPRIS"
+  face_value2_icon: "\U000F0241"        # mdi:flash
+  face_value2_color: "0xFFD60A"
+  face_value2_decimals: "2"
+  face_value2_unit: " kr"
+
+  # ---- Home page ---------------------------------------------------
+  home_title: "Hjem"
+  chip_climate_entity: sensor.homeview_klima_tekst
+  chip_lights_entity: sensor.homeview_lys_tekst
+  chip_locks_entity: sensor.homeview_lase_tekst
+
+  tile1_entity: light.light_switch_living_room
+  tile1_name: "Loftslys Stue"
+  tile1_icon: "\U000F0769"              # mdi:ceiling-light
+  tile1_color: "0xFFB300"
+  tile1_action: light.toggle
+  tile2_entity: light.floor_lamps_living_room
+  tile2_name: "Gulvlamper"
+  tile2_icon: "\U000F08DD"              # mdi:floor-lamp
+  tile2_color: "0xFFB300"
+  tile2_action: light.toggle
+  tile3_entity: light.light_switch_dining_table
+  tile3_name: "Spisebord"
+  tile3_icon: "\U000F0335"              # mdi:lightbulb
+  tile3_color: "0xFFB300"
+  tile3_action: light.toggle
+  tile4_entity: light.light_switch_kitchen_table
+  tile4_name: "Køkkenvask"
+  tile4_icon: "\U000F0335"
+  tile4_color: "0xFFB300"
+  tile4_action: light.toggle
+  tile5_entity: light.lightstrip_kitchen
+  tile5_name: "Panelvæg"
+  tile5_icon: "\U000F1051"              # mdi:led-strip-variant
+  tile5_color: "0xFFB300"
+  tile5_action: light.toggle
+  lock1_entity: lock.doorlock_frontdoor
+  lock1_name: "Fordør"
+
+packages:
+  # --- Hardware: pick the layout that matches your panel -------------
+  layout: !include packages/hardware/layout-800x480.yaml
+  # layout: !include packages/hardware/layout-1024x600.yaml   # 5B variant
+  hardware: !include packages/hardware/waveshare-s3-touch-lcd-5.yaml
+
+  # --- Core -----------------------------------------------------------
+  base: !include packages/core/base.yaml
+  theme: !include packages/core/theme.yaml
+  presence: !include packages/core/presence.yaml
+
+  # --- Proximity sensor: choose ONE ----------------------------------
+  proximity: !include packages/sensors/proximity-vl53l0x.yaml
+  # proximity: !include packages/sensors/proximity-ld2410.yaml
+  # proximity: !include
+  #   file: packages/sensors/proximity-homeassistant.yaml
+  #   vars: { proximity_entity: binary_sensor.kitchen_presence }
+
+  # --- Pages (order = page order) -------------------------------------
+  face: !include packages/pages/face.yaml
+  home: !include packages/pages/home.yaml

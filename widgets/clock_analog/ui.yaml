@@ -1,0 +1,122 @@
+# ---------------------------------------------------------------
+#  Widget: Analog clock (Apple Watch / HomeView style)
+#  Include inside any LVGL `widgets:` list:
+#
+#    - !include
+#        file: widgets/clock_analog/ui.yaml
+#        vars: { uid: face_clock, size: 440, x: 20, y: 20 }
+#
+#  Pair with widgets/clock_analog/data.yaml (same uid).
+#  Hands follow Apple's design: thin stem near the pivot, wide body,
+#  orange seconds hand and an orange-ringed pivot.
+# ---------------------------------------------------------------
+obj:
+  id: ${uid}
+  x: ${x}
+  y: ${y}
+  width: ${size}
+  height: ${size}
+  radius: ${size}
+  bg_color: 0x0C0C0E
+  bg_opa: COVER
+  scrollable: false
+  clickable: false
+  widgets:
+    - meter:
+        id: ${uid}_meter
+        width: 100%
+        height: 100%
+        align: CENTER
+        bg_opa: TRANSP
+        border_width: 0
+        pad_all: 10
+        scrollable: false
+        clickable: false
+        # Styles the numeral labels of the scales
+        ticks:
+          text_font: hv_font_dial
+          text_color: ${c_label}
+        # Pivot
+        indicator:
+          width: 14
+          height: 14
+          bg_color: 0x000000
+          border_width: 3
+          border_color: ${c_orange}
+        scales:
+          # 1. Minute track: 60 fine ticks, bolder 5-minute ticks
+          - range_from: 0
+            range_to: 60
+            angle_range: 360
+            rotation: 270
+            ticks:
+              count: 61
+              width: 2
+              length: 9
+              color: ${c_label_3}
+          # 2. Hour numerals 1-12 + hour ticks
+          - range_from: 1
+            range_to: 12
+            angle_range: 330
+            rotation: 300
+            ticks:
+              count: 12
+              width: 1
+              length: 1
+              color: 0x000000
+              major:
+                stride: 1
+                width: 4
+                length: 14
+                color: ${c_label}
+                label_gap: 20
+          # 3. Hour hand (range 0..720 minutes = 12 h)
+          - range_from: 0
+            range_to: 720
+            angle_range: 360
+            rotation: 270
+            indicators:
+              - line:
+                  id: ${uid}_hour_stem
+                  width: 4
+                  color: ${c_label}
+                  length: 14%
+                  value: 0
+              - line:
+                  id: ${uid}_hour
+                  width: 11
+                  color: ${c_label}
+                  radial_offset: 12%
+                  length: 38%
+                  value: 0
+          # 4. Minute hand (range 0..3600 seconds = smooth minute hand)
+          - range_from: 0
+            range_to: 3600
+            angle_range: 360
+            rotation: 270
+            indicators:
+              - line:
+                  id: ${uid}_minute_stem
+                  width: 4
+                  color: ${c_label}
+                  length: 14%
+                  value: 0
+              - line:
+                  id: ${uid}_minute
+                  width: 11
+                  color: ${c_label}
+                  radial_offset: 12%
+                  length: 70%
+                  value: 0
+          # 5. Seconds hand
+          - range_from: 0
+            range_to: 60
+            angle_range: 360
+            rotation: 270
+            indicators:
+              - line:
+                  id: ${uid}_second
+                  width: 3
+                  color: ${c_orange}
+                  length: 92%
+                  value: 0

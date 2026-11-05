@@ -1,0 +1,180 @@
+#############################################################
+#  PRESENCE / AMBIENT STATE MACHINE  (HomeView-style behaviour)
+#
+#  Contract:
+#   - A proximity package (packages/sensors/proximity-*.yaml) provides
+#     binary_sensor  id: hv_proximity   and calls
+#     script homeview_proximity_changed  on every state change.
+#   - Page packages provide LVGL pages  id: face_page  and  id: home_page.
+#
+#  Behaviour:
+#   AMBIENT  nobody close         -> Face (analog clock + 4 complications)
+#   NEAR     someone approaches   -> wakes screen, optionally opens Home
+#   IDLE     no touch for N s and
+#            nobody close         -> glides back to the Face
+#   SLEEP    (optional) nobody close for N min -> backlight off
+#   NIGHT    switch / HA automation -> red, StandBy-style tint
+#############################################################
+
+globals:
+  - id: hv_last_activity
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+
+switch:
+  - platform: template
+    id: hv_sw_night
+    name: "Nattilstand"
+    icon: mdi:weather-night
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - lvgl.widget.show: hv_night_overlay
+      - script.execute: homeview_show_face
+    on_turn_off:
+      - lvgl.widget.hide: hv_night_overlay
+
+  - platform: template
+    id: hv_sw_auto_home
+    name: "Åbn Hjem ved nærhed"
+    icon: mdi:home-import-outline
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    entity_category: config
+
+  - platform: template
+    id: hv_sw_sleep
+    name: "Sluk skærm uden nærhed"
+    icon: mdi:monitor-off
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    entity_category: config
+
+number:
+  - platform: template
+    id: hv_idle_seconds
+    name: "Tilbage til urskive efter"
+    icon: mdi:timer-sand
+    unit_of_measurement: s
+    min_value: 5
+    max_value: 300
+    step: 5
+    initial_value: 20
+    optimistic: true
+    restore_value: true
+    entity_category: config
+
+  - platform: template
+    id: hv_sleep_minutes
+    name: "Sluk skærm efter"
+    icon: mdi:timer-off-outline
+    unit_of_measurement: min
+    min_value: 1
+    max_value: 120
+    step: 1
+    initial_value: 10
+    optimistic: true
+    restore_value: true
+    entity_category: config
+
+select:
+  # Lets Home Assistant automations drive the UI ("show Home when doorbell rings")
+  - platform: template
+    id: hv_page_select
+    name: "Side"
+    icon: mdi:page-layout-body
+    options: ["Urskive", "Hjem"]
+    initial_option: "Urskive"
+    optimistic: true
+    set_action:
+      - script.execute: homeview_user_activity
+      - if:
+          condition:
+            lambda: 'return x == "Hjem";'
+          then:
+            - script.execute: homeview_show_home
+          else:
+            - script.execute: homeview_show_face
+
+script:
+  - id: homeview_user_activity
+    mode: restart
+    then:
+      - lambda: 'id(hv_last_activity) = millis();'
+      - if:
+          condition:
+            light.is_off: screen_backlight
+          then:
+            - light.turn_on: screen_backlight
+
+  - id: homeview_proximity_changed
+    mode: restart
+    then:
+      - if:
+          condition:
+            binary_sensor.is_on: hv_proximity
+          then:
+            - script.execute: homeview_user_activity
+            - if:
+                condition:
+                  and:
+                    - switch.is_on: hv_sw_auto_home
+                    - switch.is_off: hv_sw_night
+                    - lvgl.page.is_showing: face_page
+                then:
+                  - script.execute: homeview_show_home
+
+  # Page switches are instant: a full-screen animated transition re-renders all
+  # 800x480 pixels per frame in software (~250-300 ms each on the S3), which
+  # blocks the main loop and starves other components (e.g. the VL53L0X).
+  # publish_state() only reports the page to HA; select.set would re-run
+  # set_action and recurse into this script ("already running" warning).
+  - id: homeview_show_home
+    then:
+      - if:
+          condition:
+            not:
+              lvgl.page.is_showing: home_page
+          then:
+            - lvgl.page.show:
+                id: home_page
+                animation: NONE
+      - lambda: 'id(hv_page_select).publish_state("Hjem");'
+
+  - id: homeview_show_face
+    then:
+      - if:
+          condition:
+            not:
+              lvgl.page.is_showing: face_page
+          then:
+            - lvgl.page.show:
+                id: face_page
+                animation: NONE
+      - lambda: 'id(hv_page_select).publish_state("Urskive");'
+
+interval:
+  - interval: 1s
+    then:
+      - lambda: 'if (id(hv_last_activity) == 0) id(hv_last_activity) = millis();'
+      # Back to the clock face when idle and nobody is close
+      - if:
+          condition:
+            and:
+              - binary_sensor.is_off: hv_proximity
+              - not:
+                  lvgl.page.is_showing: face_page
+              - lambda: 'return (millis() - id(hv_last_activity)) > (uint32_t)(id(hv_idle_seconds).state * 1000);'
+          then:
+            - script.execute: homeview_show_face
+      # Optional: backlight off after N minutes without anyone close
+      - if:
+          condition:
+            and:
+              - switch.is_on: hv_sw_sleep
+              - binary_sensor.is_off: hv_proximity
+              - light.is_on: screen_backlight
+              - lambda: 'return (millis() - id(hv_last_activity)) > (uint32_t)(id(hv_sleep_minutes).state * 60000);'
+          then:
+            - light.turn_off: screen_backlight

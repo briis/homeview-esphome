@@ -1,0 +1,30 @@
+# ---------------------------------------------------------------
+#  Widget: Single value complication (small square widget)
+#  vars: uid, x, y, width, height, icon, icon_color, label
+# ---------------------------------------------------------------
+obj:
+  id: ${uid}
+  x: ${x}
+  y: ${y}
+  width: ${width}
+  height: ${height}
+  styles: hv_platter
+  scrollable: false
+  clickable: false
+  widgets:
+    - label:
+        align: TOP_LEFT
+        text: "${icon}"
+        text_font: hv_icons_md
+        text_color: ${icon_color}
+    - label:
+        align: TOP_RIGHT
+        y: 6
+        text: "${label}"
+        styles: hv_caption
+    - label:
+        id: ${uid}_value
+        align: BOTTOM_LEFT
+        text: "–"
+        text_font: hv_font_value
+        text_color: ${c_label}

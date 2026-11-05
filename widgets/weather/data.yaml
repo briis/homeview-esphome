@@ -1,0 +1,58 @@
+# ---------------------------------------------------------------
+#  Widget data: Weather
+#  vars: uid, weather_entity, high_entity, low_entity
+#  high/low come from the HomeView HA package (weather.get_forecasts).
+# ---------------------------------------------------------------
+text_sensor:
+  - platform: homeassistant
+    id: ${uid}_cond_ha
+    entity_id: ${weather_entity}
+    internal: true
+    on_value:
+      - lvgl.label.update:
+          id: ${uid}_icon
+          text: !lambda 'return std::string(hv::weather_icon(x));'
+          text_color: !lambda 'return lv_color_hex(hv::weather_color(x));'
+      - lvgl.label.update:
+          id: ${uid}_condition
+          text: !lambda 'return std::string(hv::weather_text_da(x));'
+
+sensor:
+  - platform: homeassistant
+    id: ${uid}_temp_ha
+    entity_id: ${weather_entity}
+    attribute: temperature
+    internal: true
+    filters:
+      - filter_out: nan
+    on_value:
+      - lvgl.label.update:
+          id: ${uid}_temp
+          text: !lambda 'return hv::fmt_da(x, 0) + "°";'
+
+  - platform: homeassistant
+    id: ${uid}_high_ha
+    entity_id: ${high_entity}
+    internal: true
+    filters:
+      - filter_out: nan
+    on_value:
+      - script.execute: ${uid}_update_hilo
+
+  - platform: homeassistant
+    id: ${uid}_low_ha
+    entity_id: ${low_entity}
+    internal: true
+    filters:
+      - filter_out: nan
+    on_value:
+      - script.execute: ${uid}_update_hilo
+
+script:
+  - id: ${uid}_update_hilo
+    then:
+      - lvgl.label.update:
+          id: ${uid}_hilo
+          text: !lambda |-
+            if (std::isnan(id(${uid}_high_ha).state) || std::isnan(id(${uid}_low_ha).state)) return std::string("");
+            return "H:" + hv::fmt_da(id(${uid}_high_ha).state, 0) + "°  L:" + hv::fmt_da(id(${uid}_low_ha).state, 0) + "°";

@@ -1,0 +1,76 @@
+#############################################################
+#  PROXIMITY: HLK-LD2410C 24 GHz mmWave radar (UART)
+#
+#  Works THROUGH the 3D-printed enclosure (PLA/PETG, keep the wall in
+#  front of the antenna 1-2 mm and free of metal/infill-dense areas).
+#
+#  !! PIN WARNING for the Waveshare 5" board !!
+#  Almost every GPIO goes to the RGB panel. GPIO43/44 are wired to the
+#  on-board RS485 transceiver and GPIO15/16 to the CAN transceiver,
+#  whose receivers actively drive the ESP RX line. Use a pin pair you
+#  have verified as free on YOUR board revision (or lift the transceiver),
+#  and set ld2410_tx_pin / ld2410_rx_pin accordingly.
+#  If in doubt, use proximity-vl53l0x.yaml (I2C, no spare GPIO needed).
+#
+#  Provides: binary_sensor id hv_proximity  (contract for presence.yaml)
+#############################################################
+
+substitutions:
+  ld2410_tx_pin: GPIO44
+  ld2410_rx_pin: GPIO43
+  proximity_default_cm: "120"
+
+uart:
+  - id: ld2410_uart
+    tx_pin: ${ld2410_tx_pin}
+    rx_pin: ${ld2410_rx_pin}
+    baud_rate: 256000
+    parity: NONE
+    stop_bits: 1
+
+ld2410:
+  - id: ld2410_radar
+    uart_id: ld2410_uart
+
+sensor:
+  - platform: ld2410
+    ld2410_id: ld2410_radar
+    detection_distance:
+      id: hv_distance_cm
+      name: "Afstand"
+      entity_category: diagnostic
+
+binary_sensor:
+  - platform: ld2410
+    ld2410_id: ld2410_radar
+    has_target:
+      id: hv_radar_target
+      name: "Radar mål"
+      entity_category: diagnostic
+
+  - platform: template
+    id: hv_proximity
+    name: "Nærhed"
+    device_class: occupancy
+    lambda: |-
+      if (!id(hv_radar_target).state) return false;
+      const float d = id(hv_distance_cm).state;
+      return !std::isnan(d) && d < id(hv_proximity_cm).state;
+    filters:
+      - delayed_off: 4s
+    on_state:
+      - script.execute: homeview_proximity_changed
+
+number:
+  - platform: template
+    id: hv_proximity_cm
+    name: "Nærhedsafstand"
+    icon: mdi:ruler
+    unit_of_measurement: cm
+    min_value: 30
+    max_value: 400
+    step: 10
+    initial_value: ${proximity_default_cm}
+    optimistic: true
+    restore_value: true
+    entity_category: config

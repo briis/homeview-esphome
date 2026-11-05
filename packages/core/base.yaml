@@ -1,0 +1,99 @@
+#############################################################
+#  CORE: networking, API, OTA, time
+#  Substitutions: device_name, friendly_name, version
+#  Secrets: wifi_ssid, wifi_password, api_encryption_key, fallback_ap_password
+#############################################################
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  min_version: 2026.10.0
+  name_add_mac_suffix: false
+  project:
+    name: "briis.homeview"
+    version: ${version}
+
+logger:
+  level: INFO
+  logs:
+    # The touch driver and LVGL are chatty at DEBUG
+    gt911.touchscreen: INFO
+    lvgl: INFO
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+  # The tiles call HA actions: remember to enable
+  # "Allow the device to perform Home Assistant actions"
+  # in Settings > Devices > ESPHome > HomeView > Configure.
+  # NOTE: these triggers fire for ANY API client (ESPHome dashboard logs, the
+  # device builder, aioesphomeapi tools ...), not only Home Assistant. So we
+  # never trust the event itself - we re-check whether a client that
+  # subscribes to states (= Home Assistant) is still connected.
+  on_client_connected:
+    - script.execute: homeview_check_ha_connection
+  on_client_disconnected:
+    - script.execute: homeview_check_ha_connection
+
+ota:
+  - platform: esphome
+    # Re-uses the API encryption key (no extra secret, no password overhead)
+    encryption:
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  power_save_mode: none   # RGB panel + LVGL: avoid latency spikes from modem sleep
+  ap:
+    ssid: "${friendly_name} Fallback"
+    password: !secret fallback_ap_password
+
+captive_portal:
+
+time:
+  - platform: homeassistant
+    id: hv_time
+    timezone: Europe/Copenhagen
+
+sensor:
+  - platform: wifi_signal
+    name: "WiFi signal"
+    update_interval: 60s
+    entity_category: diagnostic
+  - platform: uptime
+    name: "Oppetid"
+    entity_category: diagnostic
+
+button:
+  - platform: restart
+    name: "Genstart"
+    entity_category: config
+
+script:
+  - id: homeview_check_ha_connection
+    mode: restart
+    then:
+      # Give HA a moment to (re)connect before alarming the user
+      - delay: 5s
+      - if:
+          condition:
+            api.connected:
+              state_subscription_only: true
+          then:
+            - lvgl.widget.hide: hv_status_banner
+          else:
+            - lvgl.label.update:
+                id: hv_status_text
+                text: "Ingen forbindelse til Home Assistant"
+            - lvgl.widget.show: hv_status_banner
+
+  # Kept for compatibility with older page packages
+  - id: homeview_refresh_all
+    then:
+      - script.execute: homeview_check_ha_connection
+
+interval:
+  # Self-healing: re-evaluate every 30 s
+  - interval: 30s
+    then:
+      - script.execute: homeview_check_ha_connection

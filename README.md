@@ -49,6 +49,10 @@ switches between those two.
 | **Idle** | no touch for *Tilbage til urskive efter* seconds and nobody near | fades back to the Face |
 | **Sleep** *(optional)* | *Sluk skærm uden nærhed* on, and nobody near for *Sluk skærm efter* minutes | backlight off. Proximity or a touch wakes it |
 | **Night** | *Nattilstand* switch, e.g. from an HA automation at bedtime | red StandBy-style tint over everything |
+| **Night off** | *Sluk skærm om natten* on, and the time is between *Nat fra* and *Nat til* | screen dark. *Tænd skærm om natten med* decides what wakes it: **Nærhed** (someone in front) or **Berøring** (touch only). It stays on for *Tændt om natten i* seconds after the last touch (and, with Nærhed, until nobody is close), then goes dark again on the Face. Alarm, doorbell and leak warnings still wake it |
+
+All night settings are entities on the device page in Home Assistant (under *Configuration*).
+The *Nattetid* binary sensor shows whether the night window is active, for your own automations.
 
 Gestures: tap or swipe left on the Face opens Home. Swipe right, or tap the time, returns to the Face.
 Swipe up or down on the Smart Stack to flip cards. Tap a tile to toggle it. Lock tiles **lock on tap**

@@ -14,6 +14,11 @@
 #            nobody close         -> glides back to the Face
 #   SLEEP    (optional) nobody close for N min -> backlight off
 #   NIGHT    switch / HA automation -> red, StandBy-style tint
+#   NIGHT-OFF (optional) between "Nat fra" and "Nat til" the screen is
+#            dark. It wakes on proximity or only on touch ("Tænd skærm om
+#            natten med"), stays on for "Tændt om natten i" seconds after
+#            the last touch / presence, then goes dark again.
+#            Alarms, doorbell and leak warnings still wake it.
 #############################################################
 
 globals:
@@ -42,6 +47,16 @@ switch:
     optimistic: true
     restore_mode: RESTORE_DEFAULT_ON
     entity_category: config
+
+  - platform: template
+    id: hv_sw_night_off
+    name: "Sluk skærm om natten"
+    icon: mdi:monitor-off
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    entity_category: config
+    on_turn_off:
+      - light.turn_on: screen_backlight
 
   - platform: template
     id: hv_sw_sleep
@@ -78,7 +93,73 @@ number:
     restore_value: true
     entity_category: config
 
+  - platform: template
+    id: hv_night_on_seconds
+    name: "Tændt om natten i"
+    icon: mdi:timer-outline
+    unit_of_measurement: s
+    min_value: 10
+    max_value: 600
+    step: 5
+    initial_value: 30
+    optimistic: true
+    restore_value: true
+    entity_category: config
+
+datetime:
+  - platform: template
+    id: hv_night_start
+    type: time
+    name: "Nat fra"
+    icon: mdi:weather-night
+    optimistic: true
+    restore_value: true
+    initial_value: "23:00:00"
+    entity_category: config
+  - platform: template
+    id: hv_night_end
+    type: time
+    name: "Nat til"
+    icon: mdi:weather-sunset-up
+    optimistic: true
+    restore_value: true
+    initial_value: "06:30:00"
+    entity_category: config
+
+binary_sensor:
+  # On between "Nat fra" and "Nat til" (also across midnight).
+  # Off while the clock isn't synced yet.
+  - platform: template
+    id: hv_night_now
+    name: "Nattetid"
+    icon: mdi:weather-night
+    lambda: |-
+      auto now = id(hv_time).now();
+      if (!now.is_valid()) return false;
+      const int t = now.hour * 60 + now.minute;
+      const int a = id(hv_night_start).hour * 60 + id(hv_night_start).minute;
+      const int b = id(hv_night_end).hour * 60 + id(hv_night_end).minute;
+      if (a == b) return false;
+      return a < b ? (t >= a && t < b) : (t >= a || t < b);
+    on_release:
+      # Morning: screen back on with the normal daytime behaviour
+      - if:
+          condition:
+            switch.is_on: hv_sw_night_off
+          then:
+            - script.execute: homeview_user_activity
+
 select:
+  - platform: template
+    id: hv_night_wake
+    name: "Tænd skærm om natten med"
+    icon: mdi:gesture-tap
+    options: ["Nærhed", "Berøring"]
+    initial_option: "Nærhed"
+    optimistic: true
+    restore_value: true
+    entity_category: config
+
   # Lets Home Assistant automations drive the UI ("show Home when doorbell rings")
   - platform: template
     id: hv_page_select
@@ -113,7 +194,13 @@ script:
     then:
       - if:
           condition:
-            binary_sensor.is_on: hv_proximity
+            and:
+              - binary_sensor.is_on: hv_proximity
+              # Night with touch-only wake: someone walking past must not
+              # light the screen up
+              - lambda: |-
+                  return !(id(hv_sw_night_off).state && id(hv_night_now).state &&
+                           id(hv_night_wake).current_option() == std::string("Berøring"));
           then:
             - script.execute: homeview_user_activity
             - if:
@@ -122,6 +209,8 @@ script:
                     - switch.is_on: hv_sw_auto_home
                     - switch.is_off: hv_sw_night
                     - lvgl.page.is_showing: face_page
+                    # at night the clock face stays (if the night screen-off is used)
+                    - lambda: 'return !(id(hv_sw_night_off).state && id(hv_night_now).state);'
                 then:
                   - script.execute: homeview_show_home
 
@@ -168,6 +257,22 @@ interval:
               - lambda: 'return (millis() - id(hv_last_activity)) > (uint32_t)(id(hv_idle_seconds).state * 1000);'
           then:
             - script.execute: homeview_show_face
+      # Night: dark again "Tændt om natten i" seconds after the last touch
+      # (and, in proximity mode, once nobody is close). The Face is shown
+      # first so the touch that wakes the screen can't hit a button.
+      - if:
+          condition:
+            and:
+              - switch.is_on: hv_sw_night_off
+              - binary_sensor.is_on: hv_night_now
+              - light.is_on: screen_backlight
+              - lambda: |-
+                  const bool touch_only = id(hv_night_wake).current_option() == std::string("Berøring");
+                  if (!touch_only && id(hv_proximity).state) return false;
+                  return (millis() - id(hv_last_activity)) > (uint32_t) (id(hv_night_on_seconds).state * 1000);
+          then:
+            - script.execute: homeview_show_face
+            - light.turn_off: screen_backlight
       # Optional: backlight off after N minutes without anyone close
       - if:
           condition:

@@ -65,7 +65,7 @@ cheek_gap        = 0.4;      // ear <-> cheek, per side
 cheek_r          = 11;       // material around the pivot hole
 cheek_arc_r      = 17.5;     // material around the slot (room for the ticks outside the knob)
 cable_w          = 14;
-foot_d           = 10;
+foot_d           = 12.6;     // stick-on rubber feet, Ø12.6 x 3.5 mm (av-cables.dk 'flade apparatfødder'); recess = foot_d + 0.4
 foot_depth       = 1.0;
 
 /* ---------- Screws ---------- */

@@ -34,7 +34,7 @@ insert_holes     = false;    // true: M4 heat-set inserts
 insert_d         = 5.6;
 cable_w          = 14;       // cable arch through the upright
 cable_h          = 14;
-foot_d           = 10;       // recesses for stick-on rubber feet
+foot_d           = 12.6;     // stick-on rubber feet, Ø12.6 x 3.5 mm (av-cables.dk 'flade apparatfødder'); recess = foot_d + 0.4
 foot_depth       = 1.0;
 
 $fn = 64;

@@ -97,7 +97,7 @@ lifts off again.
 - 15° tilt, case bottom 32 mm above the table (room for a DC plug). Footprint 118 × 92 mm, height 148 mm.
 - Cable arch through the upright and a channel in the base, under the 5" case's DC socket.
 - Print base down, no supports. Hardware: 2 × M4×12 pan-head screws (self-tap into the 3.4 mm holes;
-  screw them in until the heads stand ~3 mm proud), 4 × Ø10 mm rubber feet.
+  screw them in until the heads stand ~3 mm proud), 4 × Ø12.6 mm rubber feet (see below).
 
 ### Adjustable 0–20° stand — `desk_stand_tilt_base / _upright / _knob.stl`
 
@@ -125,11 +125,15 @@ curved slots. Tick marks every 5° on the cheeks (long ticks at 0°, 10° and 20
 | M4×12 cap or pan-head screw + washer | 2 | Pivots |
 | M4×20 hex-head bolt (DIN 933) + washer | 2 | Locks, head in the thumb knob |
 | M4×12 pan-head screw | 2 | Hanging screws |
-| Ø10 mm stick-on rubber foot | 4 | Under the base |
+| Ø12.6 × 3.5 mm stick-on rubber foot | 4 | Under the base (recesses are Ø13.0 × 1 mm) |
 
 Assembly: melt the inserts into the ears from the outside, put the upright between the cheeks, fit the
 pivot screws snug (the upright should still turn), then the knob bolts through the slots. To change the
 angle, loosen both knobs, tilt, and tighten both again. At 0° the upright rests on the end of the slot.
+
+**Rubber feet:** both stands have four Ø13.0 × 1 mm recesses for flat self-adhesive feet,
+Ø12.6 × 3.5 mm (in Denmark: av-cables.dk "Flade apparatfødder", 12 pcs). For other feet, set `foot_d` to
+the foot diameter (the recess is `foot_d` + 0.4) and `foot_depth`, then re-export the base.
 
 ## Hardware for the cases
 

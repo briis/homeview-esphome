@@ -21,7 +21,7 @@ and adds its own pages from `rooms/<room>/`.
 | `homeview.yaml` | generic: Face + whole-home dashboard |
 | `homeview-badevaerelse.yaml` | Face (bath temp + humidity) · Home (Now Playing, floor heating, light) · Radio (Sonos favourites) |
 | `homeview-bryggers.yaml` | **4.3B board.** Face (utility-room temp + humidity) · Home (alarm: status, arm Hjemme/Nat/Ude, PIN keypad to disarm; floor heating; front-door lock; light; door/window/salt chips) · full-screen water-leak and fire alerts |
-| `homeview-stue.yaml` | Face (living-room temp + humidity) · Home (doorbell camera, floor heating, Gulvlamper, Væglys, window + door chips) · full-screen doorbell view when someone rings |
+| `homeview-stue.yaml` | Face (living-room temp + humidity) · Home (doorbell camera, floor heating, three lights, window + door chips) · full-screen doorbell view when someone rings |
 
 | Badeværelse – Home | Radio |
 |---|---|
@@ -115,7 +115,7 @@ Widgets depend only on `packages/core/theme.yaml` (styles, fonts and the `homevi
 | `calendar` | "Up next" event with a coloured bar |
 | `value` | small square complication for any numeric sensor |
 | `status_chip` | Home-app header pill showing an HA text sensor |
-| `home_tile` | iOS 18 Home accessory tile (toggle) |
+| `home_tile` | iOS 18 Home accessory tile (toggle). `ui.yaml` is the wide tile; `ui_compact.yaml` is a small square (icon on top) so three fit in a row |
 | `lock_tile` | lock tile: tap = lock, long-press = unlock |
 | `smart_stack` | rotating Weather / Calendar / Electricity cards with page dots and swipe |
 | `page_header` | large room title + date/time, tap the time to return to the Face |

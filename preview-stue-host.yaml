@@ -63,7 +63,9 @@ substitutions:
   room_light1_entity: light.demo_l1
   room_light1_name: "Gulvlamper"
   room_light2_entity: light.demo_l2
-  room_light2_name: "Væglys"
+  room_light2_name: "Sofa Lys"
+  room_light3_entity: light.demo_l3
+  room_light3_name: "Stearinlys"
   room_camera_entity: camera.demo
   room_camera_name: "Fordør"
   room_doorbell_entity: binary_sensor.demo_ring
@@ -103,6 +105,7 @@ esphome:
           id(stue_heat_preset_ha).publish_state("constant_temperature");
           id(stue_light1_ha).publish_state("on");
           id(stue_light2_ha).publish_state("off");
+          id(stue_light3_ha).publish_state("on");
           // demo snapshot instead of a download
           lv_image_set_src(id(stue_cam_img), id(demo_cam_small)->get_lv_image_dsc());
           lv_obj_clear_flag(id(stue_cam_img), LV_OBJ_FLAG_HIDDEN);

@@ -7,12 +7,17 @@
 #   │ │              │ │  (dial)        status  [−] [+]          │   │
 #   │ │   doorbell   │ │                [preset]                 │   │
 #   │ │   camera     │ └─────────────────────────────────────────┘   │
-#   │ │ [🔔 Fordør]  │ [ 💡 Gulvlamper  Fra ] [ 💡 Væglys   Fra ]    │
+#   │ │ [🔔 Fordør]  │ [Gulvlamper] [Sofa Lys] [Stearinlys]          │
 #   │ └──────────────┘                                               │
 #   └───────────────────────────────────────────────────────────────┘
 #  + full-screen doorbell view on the top layer (any page).
 #  Geometry is for the 800x480 panel.
 #############################################################
+
+# Defaults for the third light; set them in the device file to change them.
+substitutions:
+  room_light3_entity: light.candles_living_room
+  room_light3_name: "Stearinlys"
 
 packages:
   stue_header_data: !include
@@ -59,6 +64,9 @@ packages:
   stue_light2_data: !include
     file: ../../widgets/home_tile/data.yaml
     vars: { uid: stue_light2, entity: "${room_light2_entity}", on_color: "0xFFB300", toggle_action: light.toggle, on_text: "Til", off_text: "Fra" }
+  stue_light3_data: !include
+    file: ../../widgets/home_tile/data.yaml
+    vars: { uid: stue_light3, entity: "${room_light3_entity}", on_color: "0xFF9F0A", toggle_action: light.toggle, on_text: "Til", off_text: "Fra" }
 
 lvgl:
   top_layer:
@@ -136,8 +144,11 @@ lvgl:
               pad_column: 12
             widgets:
               - !include
-                file: ../../widgets/home_tile/ui.yaml
-                vars: { uid: stue_light1, width: 237, height: 100, name: "${room_light1_name}", icon: "\U000F08DD", on_color: "0xFFB300" }
+                file: ../../widgets/home_tile/ui_compact.yaml
+                vars: { uid: stue_light1, width: 154, height: 100, name: "${room_light1_name}", icon: "\U000F08DD", on_color: "0xFFB300" }
               - !include
-                file: ../../widgets/home_tile/ui.yaml
-                vars: { uid: stue_light2, width: 237, height: 100, name: "${room_light2_name}", icon: "\U000F091C", on_color: "0xFFB300" }
+                file: ../../widgets/home_tile/ui_compact.yaml
+                vars: { uid: stue_light2, width: 154, height: 100, name: "${room_light2_name}", icon: "\U000F091C", on_color: "0xFFB300" }
+              - !include
+                file: ../../widgets/home_tile/ui_compact.yaml
+                vars: { uid: stue_light3, width: 154, height: 100, name: "${room_light3_name}", icon: "\U000F05E2", on_color: "0xFF9F0A" }

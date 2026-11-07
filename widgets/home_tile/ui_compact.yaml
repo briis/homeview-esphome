@@ -1,0 +1,68 @@
+# ---------------------------------------------------------------
+#  Widget: Accessory tile, compact (Apple Home small-square style)
+#  Same look and data as ui.yaml, but the icon badge sits on top and
+#  the name + status below, so three tiles fit in a row (~150 px each).
+#  vars: uid, width, height, name, icon, on_color
+#  Pair with widgets/home_tile/data.yaml (same uid).
+# ---------------------------------------------------------------
+button:
+  id: ${uid}
+  width: ${width}
+  height: ${height}
+  styles: hv_tile_off
+  pad_all: 10
+  scrollable: false
+  checked:
+    bg_color: ${c_tile_on}
+    bg_opa: COVER
+  pressed:
+    transform_width: -4
+    transform_height: -4
+  layout:
+    type: FLEX
+    flex_flow: COLUMN
+    flex_align_main: SPACE_BETWEEN
+    pad_row: 2
+  on_click:
+    - script.execute: ${uid}_tap
+  widgets:
+    - obj:
+        id: ${uid}_badge
+        width: 36
+        height: 36
+        radius: 18
+        bg_color: 0x48484A
+        bg_opa: COVER
+        clickable: false
+        scrollable: false
+        widgets:
+          - label:
+              id: ${uid}_icon
+              align: CENTER
+              text: "${icon}"
+              text_font: hv_icons_sm
+              text_color: 0xD1D1D6
+    - obj:
+        width: 100%
+        height: SIZE_CONTENT
+        clickable: false
+        scrollable: false
+        layout:
+          type: FLEX
+          flex_flow: COLUMN
+          pad_row: 0
+        widgets:
+          - label:
+              id: ${uid}_name
+              width: 100%
+              long_mode: DOT
+              text: "${name}"
+              text_font: hv_font_body
+              text_color: ${c_label}
+          - label:
+              id: ${uid}_state
+              width: 100%
+              long_mode: DOT
+              text: "–"
+              text_font: hv_font_footnote
+              text_color: ${c_label_2}

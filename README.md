@@ -19,7 +19,7 @@ and adds its own pages from `rooms/<room>/`.
 | Device file | Pages |
 |---|---|
 | `homeview.yaml` | generic: Face + whole-home dashboard |
-| `homeview-badevaerelse.yaml` | Face (bath temp + humidity) · Home (Now Playing, floor heating, light) · Radio (Sonos favourites) |
+| `homeview-badevaerelse.yaml` | Face (bath temp + humidity) · Home (Now Playing, floor heating, light, Nilan ventilation speed) · Radio (Sonos favourites) |
 | `homeview-bryggers.yaml` | **4.3B board.** Face (utility-room temp + humidity) · Home (alarm: status, arm Hjemme/Nat/Ude, PIN keypad to disarm; floor heating; front-door lock; light; door/window/salt chips) · full-screen water-leak and fire alerts |
 | `homeview-stue.yaml` | Face (living-room temp + humidity) · Home (doorbell camera, floor heating, three lights, window + door chips) · full-screen doorbell view when someone rings |
 
@@ -120,6 +120,7 @@ Widgets depend only on `packages/core/theme.yaml` (styles, fonts and the `homevi
 | `smart_stack` | rotating Weather / Calendar / Electricity cards with page dots and swipe |
 | `page_header` | large room title + date/time, tap the time to return to the Face |
 | `media_player` | Now Playing: artwork (via HA media proxy), title/artist, ⏮ ⏯ ⏭, live volume slider, radio button |
+| `stepper_tile` | Home-style tile for a number entity with − / + (e.g. ventilation speed), limited to a min/max |
 | `station_tile` | radio station card that selects a Sonos favourite; highlights the one playing. `ui_logo.yaml` shows the station's own logo (from `logos.yaml`) instead of the gradient |
 | `climate_dial` | thermostat arc (drag or −/+ in 0.5° steps, debounced), heating state, preset toggle |
 | `alarm_panel` | alarm status card (Frakoblet/Hjemme/Nat/Tilkoblet, exit countdown, ALARM) with Nat/Ude arm buttons behind a confirmation dialog (`confirm.yaml`), plus a PIN keypad (`keypad.yaml`, top layer) that sends the typed PIN to an HA script; HA checks the PIN, counts wrong attempts and locks out |

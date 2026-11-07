@@ -7,10 +7,18 @@
 #   │ │ art  title / artist  📻│ │  (dial)    status  [−] [+]    │  │
 #   │ │   ⏮    ⏯    ⏭          │ │            [preset]           │  │
 #   │ │ 🔈 ──────────── 🔊     │ └───────────────────────────────┘  │
-#   │ └────────────────────────┘ [ 💡 Loftslys            Til     ]  │
+#   │ └────────────────────────┘ [💡 Loftslys ] [(◎) Ventilation ]  │
+#   │                            [   Til      ] [[−] Trin 2 [+]  ]  │
 #   └────────────────────────────────────────────────────────────────┘
 #  Geometry is for the 800x480 panel.
 #############################################################
+
+# Defaults for the ventilation tile; set them in the device file to change them.
+substitutions:
+  room_vent_entity: number.nilan_air_circulation_ventilation_speed_set
+  room_vent_name: "Ventilation"
+  room_vent_min: "1"     # the display can't switch the ventilation off
+  room_vent_max: "4"
 
 packages:
   bath_logos: !include logos.yaml
@@ -46,6 +54,9 @@ packages:
       preset_off: default
       preset_on_label: "Konstant"
       preset_off_label: "Program"
+  bath_vent_data: !include
+    file: ../../widgets/stepper_tile/data.yaml
+    vars: { uid: bath_vent, entity: "${room_vent_entity}", min: "${room_vent_min}", max: "${room_vent_max}", prefix: "Trin", on_color: "${c_teal}" }
   bath_light_data: !include
     file: ../../widgets/home_tile/data.yaml
     vars: { uid: bath_light, entity: "${room_light_entity}", on_color: "0xFFB300", toggle_action: light.toggle, on_text: "Til", off_text: "Fra" }
@@ -103,7 +114,7 @@ lvgl:
             preset_on_label: "Konstant"
             preset_off_label: "Program"
 
-        # ---------- Light ----------
+        # ---------- Light + ventilation ----------
         - obj:
             x: 412
             y: 358
@@ -111,7 +122,14 @@ lvgl:
             height: 102
             scrollable: false
             clickable: false
+            layout:
+              type: FLEX
+              flex_flow: ROW
+              pad_column: 12
             widgets:
               - !include
                 file: ../../widgets/home_tile/ui.yaml
-                vars: { uid: bath_light, width: 360, height: 102, name: "${room_light_name}", icon: "\U000F0769", on_color: "0xFFB300" }
+                vars: { uid: bath_light, width: 174, height: 102, name: "${room_light_name}", icon: "\U000F0769", on_color: "0xFFB300" }
+              - !include
+                file: ../../widgets/stepper_tile/ui.yaml
+                vars: { uid: bath_vent, width: 174, height: 102, name: "${room_vent_name}", icon: "\U000F0210" }

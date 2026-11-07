@@ -91,6 +91,7 @@ esphome:
           id(face_value2_ha).publish_state(40);
           id(bath_chip_climate_ha).publish_state("23,5° · 40 % fugt");
           id(bath_chip_window_ha).publish_state("Vindue lukket");
+          id(bath_vent_ha).publish_state(2);
           id(bath_media_state_ha).publish_state("playing");
           id(bath_media_title_ha).publish_state("P1 Morgen");
           id(bath_media_artist_ha).publish_state("");

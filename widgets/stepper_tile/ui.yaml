@@ -1,0 +1,112 @@
+# ---------------------------------------------------------------
+#  Widget: Stepper tile (Home-tile look with − / + below)
+#   ┌──────────────────────┐
+#   │ (◎) Ventilation      │
+#   │ [−]    Trin 2    [+] │
+#   └──────────────────────┘
+#  vars: uid, width, height, name, icon
+#  Pair with widgets/stepper_tile/data.yaml (same uid).
+# ---------------------------------------------------------------
+obj:
+  id: ${uid}
+  width: ${width}
+  height: ${height}
+  styles: hv_tile_off
+  pad_all: 10
+  scrollable: false
+  clickable: false
+  layout:
+    type: FLEX
+    flex_flow: COLUMN
+    flex_align_main: SPACE_BETWEEN
+  widgets:
+    - obj:
+        width: 100%
+        height: SIZE_CONTENT
+        clickable: false
+        scrollable: false
+        layout:
+          type: FLEX
+          flex_flow: ROW
+          flex_align_cross: CENTER
+          pad_column: 8
+        widgets:
+          - obj:
+              id: ${uid}_badge
+              width: 32
+              height: 32
+              radius: 16
+              bg_color: 0x48484A
+              bg_opa: COVER
+              clickable: false
+              scrollable: false
+              widgets:
+                - label:
+                    id: ${uid}_icon
+                    align: CENTER
+                    text: "${icon}"
+                    text_font: hv_icons_sm
+                    text_color: 0xD1D1D6
+          - label:
+              flex_grow: 1
+              long_mode: DOT
+              text: "${name}"
+              text_font: hv_font_body
+              text_color: ${c_label}
+    - obj:
+        width: 100%
+        height: 40
+        clickable: false
+        scrollable: false
+        layout:
+          type: FLEX
+          flex_flow: ROW
+          flex_align_main: SPACE_BETWEEN
+          flex_align_cross: CENTER
+          flex_align_track: CENTER
+        widgets:
+          - button:
+              id: ${uid}_minus
+              width: 44
+              height: 38
+              radius: 19
+              bg_color: ${c_platter_2}
+              bg_opa: COVER
+              pressed:
+                bg_color: 0x636366
+              disabled:
+                bg_opa: 40%
+              on_click:
+                - script.execute:
+                    id: ${uid}_step
+                    delta: -1
+              widgets:
+                - label:
+                    align: CENTER
+                    text: "\U000F0374"
+                    text_font: hv_icons_sm
+          - label:
+              id: ${uid}_state
+              text: "–"
+              text_font: hv_font_footnote
+              text_color: ${c_label_2}
+          - button:
+              id: ${uid}_plus
+              width: 44
+              height: 38
+              radius: 19
+              bg_color: ${c_platter_2}
+              bg_opa: COVER
+              pressed:
+                bg_color: 0x636366
+              disabled:
+                bg_opa: 40%
+              on_click:
+                - script.execute:
+                    id: ${uid}_step
+                    delta: 1
+              widgets:
+                - label:
+                    align: CENTER
+                    text: "\U000F0415"
+                    text_font: hv_icons_sm

@@ -1,0 +1,61 @@
+# ---------------------------------------------------------------
+#  Widget data: Stepper tile — a number entity with − / + buttons
+#  (e.g. ventilation speed 1–4). Shows "<prefix> N".
+#  vars: uid, entity (number.*), min, max, prefix, on_color
+#    min/max limit what the display can set (e.g. min 1 so the
+#    ventilation can't be switched off from the screen).
+#  Pair with widgets/stepper_tile/ui.yaml (same uid).
+# ---------------------------------------------------------------
+globals:
+  - id: ${uid}_value
+    type: int
+    initial_value: "-1"
+
+sensor:
+  - platform: homeassistant
+    id: ${uid}_ha
+    entity_id: ${entity}
+    internal: true
+    on_value:
+      - lambda: |-
+          if (std::isnan(x)) return;
+          id(${uid}_value) = (int) lroundf(x);
+          id(${uid}_render)->execute();
+
+script:
+  - id: ${uid}_render
+    then:
+      - lambda: |-
+          const int v = id(${uid}_value);
+          std::string t = v < 0 ? std::string("–") : std::string("${prefix} ") + to_string(v);
+          lv_label_set_text(id(${uid}_state), t.c_str());
+          const bool on = v > 0;
+          lv_obj_set_style_bg_color(id(${uid}_badge), lv_color_hex(on ? ${on_color} : 0x48484A), LV_PART_MAIN);
+          lv_obj_set_style_text_color(id(${uid}_icon), lv_color_hex(on ? 0xFFFFFF : 0xD1D1D6), LV_PART_MAIN);
+          if (v >= 0 && v <= ${min}) lv_obj_add_state(id(${uid}_minus), LV_STATE_DISABLED);
+          else lv_obj_clear_state(id(${uid}_minus), LV_STATE_DISABLED);
+          if (v >= ${max}) lv_obj_add_state(id(${uid}_plus), LV_STATE_DISABLED);
+          else lv_obj_clear_state(id(${uid}_plus), LV_STATE_DISABLED);
+
+  # delta: -1 or +1. Optimistic: the label changes at once, HA confirms.
+  - id: ${uid}_step
+    parameters:
+      delta: int
+    then:
+      - script.execute: homeview_user_activity
+      - if:
+          condition:
+            lambda: |-
+              const int v = id(${uid}_value);
+              if (v < 0) return false;
+              const int n = v + delta;
+              if (n < ${min} || n > ${max}) return false;
+              id(${uid}_value) = n;
+              id(${uid}_render)->execute();
+              return true;
+          then:
+            - homeassistant.action:
+                action: number.set_value
+                data:
+                  entity_id: ${entity}
+                  value: !lambda 'return to_string(id(${uid}_value));'

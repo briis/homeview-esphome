@@ -1,0 +1,78 @@
+# ---------------------------------------------------------------
+#  Widget: Radio station tile with the station's own logo
+#  Same behaviour and data as ui.yaml (white ring + "SPILLER" badge on
+#  the playing station), but shows a compiled-in logo image instead of
+#  a gradient + radio icon. Logo above, station name below.
+#  vars: uid, width, height, label, logo (image id), logo_size (px)
+#  Pair with widgets/station_tile/data.yaml (same uid).
+# ---------------------------------------------------------------
+button:
+  id: ${uid}
+  width: ${width}
+  height: ${height}
+  radius: ${r_tile}
+  pad_all: 0
+  bg_color: ${c_platter}
+  bg_opa: COVER
+  border_width: 0
+  border_color: 0xFFFFFF
+  scrollable: false
+  checked:
+    border_width: 3
+    bg_color: ${c_platter}
+    bg_opa: COVER
+  pressed:
+    transform_width: -4
+    transform_height: -4
+  on_click:
+    - script.execute: ${uid}_tap
+  widgets:
+    # logo with rounded corners
+    - obj:
+        align: TOP_MID
+        y: 8
+        width: ${logo_size}
+        height: ${logo_size}
+        radius: 14
+        pad_all: 0
+        border_width: 0
+        bg_opa: TRANSP
+        clip_corner: true
+        clickable: false
+        scrollable: false
+        widgets:
+          - image:
+              align: CENTER
+              src: ${logo}
+              clickable: false
+    - label:
+        align: BOTTOM_MID
+        y: -7
+        width: 100%
+        long_mode: DOT
+        text_align: CENTER
+        text: "${label}"
+        text_font: hv_font_footnote
+        text_color: ${c_label_2}
+    - obj:
+        id: ${uid}_badge
+        align: TOP_RIGHT
+        x: -6
+        y: 6
+        width: SIZE_CONTENT
+        height: SIZE_CONTENT
+        radius: 10
+        pad_left: 8
+        pad_right: 8
+        pad_top: 3
+        pad_bottom: 3
+        bg_color: 0xFFFFFF
+        bg_opa: COVER
+        hidden: true
+        clickable: false
+        scrollable: false
+        widgets:
+          - label:
+              text: "SPILLER"
+              text_font: hv_font_caption
+              text_color: 0x000000

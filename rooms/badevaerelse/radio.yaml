@@ -1,7 +1,9 @@
 #############################################################
 #  ROOM: Badeværelse — Radio page (page id: radio_page)
 #  Opened from the radio button on the Now Playing card.
-#  Each tile selects a Sonos favourite by its exact source_list name.
+#  Each tile selects a Sonos favourite by its exact source_list name and
+#  shows the station's logo from logos.yaml (images/radio/ in your
+#  ESPHome folder, compiled into the firmware).
 #############################################################
 
 substitutions:
@@ -69,20 +71,20 @@ lvgl:
               pad_row: 12
               pad_column: 12
             widgets:
-              - !include { file: ../../widgets/station_tile/ui.yaml, vars: { uid: st1, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "DR P1", color_top: "0x0A84FF", color_bottom: "0x003A8C" } }
-              - !include { file: ../../widgets/station_tile/ui.yaml, vars: { uid: st2, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "DR P2", color_top: "0xBF5AF2", color_bottom: "0x4E1F75" } }
-              - !include { file: ../../widgets/station_tile/ui.yaml, vars: { uid: st3, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "DR P3", color_top: "0xFF375F", color_bottom: "0x7A0F28" } }
-              - !include { file: ../../widgets/station_tile/ui.yaml, vars: { uid: st4, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "DR P4", color_top: "0xFF9F0A", color_bottom: "0x8A4200" } }
-              - !include { file: ../../widgets/station_tile/ui.yaml, vars: { uid: st5, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "DR P5", color_top: "0x30D158", color_bottom: "0x0D5A23" } }
-              - !include { file: ../../widgets/station_tile/ui.yaml, vars: { uid: st6, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "Piano Blues", color_top: "0x5E5CE6", color_bottom: "0x201F6E" } }
-              - !include { file: ../../widgets/station_tile/ui.yaml, vars: { uid: st7, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "Radio Soft", color_top: "0x64D2FF", color_bottom: "0x135B7A" } }
+              - !include { file: ../../widgets/station_tile/ui_logo.yaml, vars: { uid: st1, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "DR P1", logo: bath_logo_dr_p1, logo_size: "132" } }
+              - !include { file: ../../widgets/station_tile/ui_logo.yaml, vars: { uid: st2, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "DR P2", logo: bath_logo_dr_p2, logo_size: "132" } }
+              - !include { file: ../../widgets/station_tile/ui_logo.yaml, vars: { uid: st3, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "DR P3", logo: bath_logo_dr_p3, logo_size: "132" } }
+              - !include { file: ../../widgets/station_tile/ui_logo.yaml, vars: { uid: st4, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "DR P4", logo: bath_logo_dr_p4, logo_size: "132" } }
+              - !include { file: ../../widgets/station_tile/ui_logo.yaml, vars: { uid: st5, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "DR P5", logo: bath_logo_dr_p5, logo_size: "132" } }
+              - !include { file: ../../widgets/station_tile/ui_logo.yaml, vars: { uid: st6, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "Piano Blues", logo: bath_logo_piano_blues, logo_size: "132" } }
+              - !include { file: ../../widgets/station_tile/ui_logo.yaml, vars: { uid: st7, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "Radio Soft", logo: bath_logo_radio_soft, logo_size: "132" } }
               # Stop tile
               - button:
                   width: ${radio_tile_w}
                   height: ${radio_tile_h}
                   radius: ${r_tile}
-                  pad_all: 14
-                  bg_color: ${c_platter_2}
+                  pad_all: 0
+                  bg_color: ${c_platter}
                   bg_opa: COVER
                   pressed:
                     transform_width: -4
@@ -96,5 +98,16 @@ lvgl:
                         id: home_page
                         animation: NONE
                   widgets:
-                    - label: { align: TOP_LEFT, text: "\U000F04DB", text_font: hv_icons_md, text_color: "${c_label}" }
-                    - label: { align: BOTTOM_LEFT, text: "Stop", text_font: hv_font_title }
+                    - obj:
+                        align: TOP_MID
+                        y: 8
+                        width: 132
+                        height: 132
+                        radius: 14
+                        bg_color: ${c_platter_2}
+                        bg_opa: COVER
+                        clickable: false
+                        scrollable: false
+                        widgets:
+                          - label: { align: CENTER, text: "\U000F04DB", text_font: hv_icons_lg, text_color: "${c_label}" }
+                    - label: { align: BOTTOM_MID, y: -7, text: "Stop", text_font: hv_font_footnote, text_color: "${c_label_2}" }

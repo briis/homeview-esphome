@@ -120,7 +120,7 @@ Widgets depend only on `packages/core/theme.yaml` (styles, fonts and the `homevi
 | `smart_stack` | rotating Weather / Calendar / Electricity cards with page dots and swipe |
 | `page_header` | large room title + date/time, tap the time to return to the Face |
 | `media_player` | Now Playing: artwork (via HA media proxy), title/artist, ⏮ ⏯ ⏭, live volume slider, radio button |
-| `station_tile` | radio station card that selects a Sonos favourite; highlights the one playing |
+| `station_tile` | radio station card that selects a Sonos favourite; highlights the one playing. `ui_logo.yaml` shows the station's own logo (from `logos.yaml`) instead of the gradient |
 | `climate_dial` | thermostat arc (drag or −/+ in 0.5° steps, debounced), heating state, preset toggle |
 | `alarm_panel` | alarm status card (Frakoblet/Hjemme/Nat/Tilkoblet, exit countdown, ALARM) with Nat/Ude arm buttons behind a confirmation dialog (`confirm.yaml`), plus a PIN keypad (`keypad.yaml`, top layer) that sends the typed PIN to an HA script; HA checks the PIN, counts wrong attempts and locks out |
 | `alert_overlay` | full-screen warning while a binary sensor is on (water leak, fire); wakes the screen, "Luk" snoozes it |

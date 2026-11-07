@@ -188,6 +188,10 @@ which is handy while you place the sensor in the enclosure.
 
 ## Proximity sensor & enclosure notes
 
+3D-printable wall cases for the 5" and 4.3B boards, with a built-in VL53L0X mount, plus a fixed and an
+adjustable desk stand, are in [`enclosure/`](enclosure/README.md). That folder has OpenSCAD sources,
+ready-to-print STLs (including two-colour files), and print and assembly notes.
+
 * **VL53L0X (recommended)**. It uses the I2C header (GPIO8/9, 3V3, GND), which is already shared with
   the touch controller, so you need no extra GPIO. It is optical: leave a **~5 mm hole** in the bezel,
   or glue IR-transparent acrylic in front of it. Mount it flush with the inside of the front wall and

@@ -21,7 +21,7 @@
 //    2x M4x20 hex-head bolts (DIN 933)   (locks, head sits in the knob's hex pocket)
 //       + 2 washers between knob and cheek
 //    2x M4x12 pan-head screws            (hanging screws for the keyholes)
-//    4x Ø10 mm rubber feet
+//    4x Ø12.6 x 3.5 mm stick-on rubber feet (recesses Ø13.0 x 1 mm)
 // =====================================================================
 
 PART = "preview";     // "base" | "upright" | "knob" | "preview" | "check"

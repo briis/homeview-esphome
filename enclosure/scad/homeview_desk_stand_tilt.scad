@@ -38,7 +38,7 @@ dc_x             = 35.0;     // power socket, case +x = LEFT of centre seen from
 /* ---------- Tilt range ---------- */
 tilt_min         = 0;
 tilt_max         = 20;
-plug_clearance   = 32;       // min. gap under the case for the power plug (at any angle)
+plug_clearance   = 60;       // min. gap under the case (table -> case bottom, at any angle): room for a straight DC plug
 
 /* ---------- Pivot geometry ---------- */
 py               = 50;       // pivot position (y from the base front edge)
@@ -57,7 +57,7 @@ ear_r            = 8;        // material around pivot / lock holes in the ear
 
 /* ---------- Base + cheeks ---------- */
 base_w           = 118;
-base_d           = 100;
+base_d           = 115;      // deeper at the back: the case sits higher now
 base_t           = 6;
 base_r           = 8;
 cheek_t          = 6;
@@ -129,9 +129,9 @@ module upright_body() {
       translate([0, -8]) rrect(54, 30, 8);
       translate([0, 30]) circle(d = 2);
     }
-    // insert holes for pivot + lock, through each ear (teardrop toward +Y = up when printed)
+    // insert holes for pivot + lock, through each ear
     for (s = [-1, 1]) for (p = [[pv, pu], [lock_Y, lock_Z]])
-      translate([s * ear_x, 0, 0]) yz_extrude(ear_t + 2) translate(p) rotate(-90) teardrop(insert_d);
+      translate([s * ear_x, 0, 0]) yz_extrude(ear_t + 2) translate(p) circle(d = insert_d);   // round: heat-set inserts need a round hole
   }
 }
 
@@ -163,8 +163,8 @@ module base() {
       for (s = [-1, 1]) translate([s * cheek_x, 0, 0]) yz_extrude(cheek_t) cheek_2d();
     }
     for (s = [-1, 1]) translate([s * cheek_x, 0, 0]) {
-      // pivot hole (teardrop: prints without sag) and lock slot
-      yz_extrude(cheek_t + 2) translate([py, pz]) teardrop(m4_clear_d);
+      // pivot hole and lock slot
+      yz_extrude(cheek_t + 2) translate([py, pz]) circle(d = m4_clear_d);
       yz_extrude(cheek_t + 2) slot_2d();
       // angle ticks on the outside face
       translate([s * (cheek_t/2 - tick_depth/2 + 0.01), 0, 0]) yz_extrude(tick_depth + 0.02) ticks_2d();

@@ -108,6 +108,11 @@ lifts off again.
 The upright pivots between two side cheeks on the base and is locked by two thumb knobs running in
 curved slots. Tick marks every 5° on the cheeks (long ticks at 0°, 10° and 20°) show the angle.
 
+- The case bottom stays at least **60 mm above the table** at every angle (54 mm above the base), so a
+  straight DC plug fits in the 5" case's bottom socket. Change `plug_clearance` to go lower or higher.
+- Footprint 118 × 115 mm. Checked at 0, 5, 10, 15 and 20° with both cases: no collisions (`PART="check"`).
+- The heat-set insert holes in the upright's ears are plain round holes.
+
 | Part | Qty | Print orientation |
 |---|---|---|
 | `desk_stand_tilt_base.stl` | 1 | Flat, cheeks up |

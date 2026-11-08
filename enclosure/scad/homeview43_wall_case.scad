@@ -26,7 +26,11 @@
 //  drawing. The outline 112.4 x 75.1 mm is from Waveshare's spec.
 // =====================================================================
 
-PART = "assembly";      // "front" | "back" | "testfit" | "sensorinsert" | "sensortest" | "assembly"
+PART = "assembly";
+// sensor = true : HomeView case with the VL53L0X mount in a 28 mm chin (hangs one way up).
+// sensor = false: "plain" case, no sensor: 12 mm bands top and bottom, symmetric, with
+//                 keyholes at both ends so it hangs either way up (rotate the display in firmware).
+sensor = true;      // "front" | "back" | "testfit" | "sensorinsert" | "sensortest" | "assembly"
 
 /* ---------- Display module (Waveshare) ---------- */
 glass_w        = 112.4;   // module/glass width  (Waveshare spec, +-0.1)
@@ -66,7 +70,7 @@ wall           = 3.0;     // side / outer walls
 front_t        = 1.8;     // bezel plate thickness in front of the glass
 lip            = 2.2;     // how far the bezel overlaps the glass edge
 top_band       = 12.0;    // bezel above the glass (houses 2 screw bosses)
-chin_h         = 28.0;    // bezel below the glass (houses sensor + 2 bosses)
+chin_h         = sensor ? 28.0 : top_band;   // bezel below the glass (sensor + 2 bosses; plain = same as the top)
 cavity_extra   = 0.1;     // shell depth stays 22.2 (as printed); the back plate's terminal pocket gives the room
 corner_r       = 7.0;     // outer corner radius
 edge_chamfer   = 1.2;     // front edge chamfer
@@ -75,6 +79,7 @@ edge_chamfer   = 1.2;     // front edge chamfer
 back_t         = 5.0;     // room for the recessed M3 / M2.5 screw heads
 keyhole_spacing= 60.0;    // 60 mm = standard EU/DK wall box spacing (= desk stands)
 keyhole_to_bottom = 99.8; // hanging screw -> case bottom, same as the 5" case (= desk stands)
+plain_kh_from_top = 14.0; // plain case: slot end (hanging screw) -> nearest outer edge, at both ends
 keyhole_head_d = 8.5;
 keyhole_slot_w = 4.4;
 keyhole_len    = 10.0;
@@ -198,8 +203,8 @@ ins_cy   = chip_y;                                      // pill centred on the w
 boss_xy = [
   [ -(outer_w/2 - wall - boss_d/2 - 2),  pocket_h/2 + top_band/2 ],
   [  (outer_w/2 - wall - boss_d/2 - 2),  pocket_h/2 + top_band/2 ],
-  [ -(outer_w/2 - wall - boss_d/2 - 2),  y_bot + wall + boss_d/2 + 2 ],
-  [  (outer_w/2 - wall - boss_d/2 - 2),  y_bot + wall + boss_d/2 + 2 ],
+  [ -(outer_w/2 - wall - boss_d/2 - 2),  sensor ? y_bot + wall + boss_d/2 + 2 : -(pocket_h/2 + chin_h/2) ],
+  [  (outer_w/2 - wall - boss_d/2 - 2),  sensor ? y_bot + wall + boss_d/2 + 2 : -(pocket_h/2 + chin_h/2) ],
 ];
 
 // ---------------- helpers ----------------
@@ -235,7 +240,7 @@ module front_shell() {
       // glass locating rib above the glass top edge
       translate([-pocket_w/2, pocket_h/2, 0]) cube([pocket_w, 1.6, front_t + glass_t]);
       // sensor pillars + light-blocking block (or the opening for the insert)
-      if (!sensor_insert) { sensor_pillars(); if (PART != "white") sensor_nose(); }
+      if (sensor && !sensor_insert) { sensor_pillars(); if (PART != "white") sensor_nose(); }
     }
     // display opening (glass shows through, bezel overlaps the edge by `lip`)
     translate([0, 0, -1])
@@ -244,7 +249,7 @@ module front_shell() {
     // glass pocket (from behind the bezel), R4 corners like the glass
     translate([0, 0, front_t]) linear_extrude(depth) rrect(pocket_w, pocket_h, glass_r + min(fit_clear_x, fit_clear_y));
     // sensor window + blind screw holes, or the stepped opening for the insert
-    if (sensor_insert) insert_opening(ins_clear); else sensor_cuts();
+    if (sensor) { if (sensor_insert) insert_opening(ins_clear); else sensor_cuts(); }
     // two-colour: the black oval is a separate body
     if (PART == "white") translate([win_x, chip_y, -1]) linear_extrude(front_t + 2) pill(mc_w, mc_h);
     // insert holes
@@ -406,7 +411,13 @@ module back_plate() {
     // pocket over the green terminal block (symmetric in x, so the left-right flip doesn't matter)
     translate([-35, glass_h/2 - 65, back_t - term_pocket_depth]) cube([70, 15, term_pocket_depth + 3]);
     // keyholes (hang on two wall screws)
-    for (s = [-1, 1]) translate([s*keyhole_spacing/2, y_bot + keyhole_to_bottom - keyhole_len, 0]) keyhole();
+    if (sensor)
+      for (s = [-1, 1]) translate([s*keyhole_spacing/2, y_bot + keyhole_to_bottom - keyhole_len, 0]) keyhole();
+    else
+      // plain case: one pair per end, slots pointing outward, so it hangs either way up.
+      // Hanging screw 14 mm below the top edge (the stands' upright ends 14 mm above the screw).
+      for (s = [-1, 1]) for (e = [1, -1])
+        translate([s*keyhole_spacing/2, e * (y_top - plain_kh_from_top - keyhole_len), 0]) mirror([0, e > 0 ? 0 : 1, 0]) keyhole();
     // optional cable hole through the back plate
     if (cable_hole) translate([cable_offset_x, chin_cy, -1]) cylinder(d = cable_d, h = back_t + 4);
   }

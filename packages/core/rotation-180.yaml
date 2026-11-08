@@ -1,0 +1,13 @@
+#############################################################
+#  SCREEN ROTATION: 180° (upside down)
+#  E.g. a 4.3B mounted so the USB / screw terminal sits on the other
+#  side. LVGL rotates the picture and the touch coordinates in
+#  software. Costs one extra full-screen buffer in PSRAM (~750 KB),
+#  which is why it's a separate package instead of "rotation: 0".
+#  Chosen in the device file with  display_rotation: "180"
+#############################################################
+substitutions:
+  display_rotation_active: "180"
+
+lvgl:
+  rotation: 180

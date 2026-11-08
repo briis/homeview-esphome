@@ -1,0 +1,7 @@
+#############################################################
+#  SCREEN ROTATION: 0° (normal) — nothing to add.
+#  Chosen in the device file with  display_rotation: "0"  and the
+#  package line  packages/core/rotation-${display_rotation}.yaml
+#############################################################
+substitutions:
+  display_rotation_active: "0"

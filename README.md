@@ -184,6 +184,10 @@ packages:
   `proximity_source: homeassistant` uses any motion / presence `binary_sensor` from Home Assistant
   instead (`proximity_entity`, plus `proximity_hold` to keep the screen awake after a PIR sensor
   drops back to clear). No sensor needs to be mounted in the case then.
+- **Screen rotation:** `display_rotation: "180"` turns the picture and touch upside down, e.g. for
+  a 4.3B mounted with the USB socket on the other side (the files list includes
+  `packages/core/rotation-${display_rotation}.yaml`). 180° costs one extra full-screen buffer
+  (~750 KB PSRAM), so `"0"` adds nothing.
 - **Radio logos** (`rooms/badevaerelse/logos.yaml`) are not in the repo. Put the PNGs in
   `images/radio/` next to your device file.
 - **Home Assistant packages** (`homeassistant/*.yaml`) still need copying into `/config/packages/`.

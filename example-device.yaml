@@ -21,6 +21,10 @@ substitutions:
   homeview_components: "github://briis/homeview-esphome@${homeview_ref}"
   fonts_dir: "https://raw.githubusercontent.com/briis/homeview-esphome/${homeview_ref}/fonts"
 
+  # ---- Screen rotation -------------------------------------------------
+  # "0" normal, "180" upside down (e.g. USB on the other side)
+  display_rotation: "0"
+
   # ---- Presence (what wakes the display) ------------------------------
   # vl53l0x       = the distance sensor built into the case
   # homeassistant = a motion / presence sensor from Home Assistant
@@ -83,6 +87,7 @@ packages:
       - packages/hardware/waveshare-s3-touch-lcd-5.yaml
       - packages/core/base.yaml
       - packages/core/theme.yaml
+      - packages/core/rotation-${display_rotation}.yaml
       - packages/core/presence.yaml
       - packages/sensors/proximity-${proximity_source}.yaml
       - packages/pages/face.yaml

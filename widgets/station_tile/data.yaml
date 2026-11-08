@@ -1,9 +1,10 @@
 # ---------------------------------------------------------------
 #  Widget data: Radio station tile
-#  vars: uid, entity, source, back_page
+#  vars: uid, entity, source, back_script
 #    source    = the favourite's name exactly as in the player's
 #                source_list (e.g. "DR P4 København")
-#    back_page = page to return to after choosing (e.g. home_page)
+#    back_script = script that returns to the previous page after
+#                  choosing (packages/radio/page.yaml defines radio_back)
 # ---------------------------------------------------------------
 text_sensor:
   - platform: homeassistant
@@ -47,6 +48,4 @@ script:
             entity_id: ${entity}
             source: "${source}"
       - delay: 600ms
-      - lvgl.page.show:
-          id: ${back_page}
-          animation: NONE
+      - script.execute: ${back_script}

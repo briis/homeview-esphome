@@ -1,28 +1,3 @@
-#############################################################
-#  ROOM: Badeværelse — built-in station logos
-#  Compiled into the firmware, so they show instantly, even right after
-#  a reboot. Anything not listed here (new favourites, music covers)
-#  still uses the download cache in the Now Playing widget.
-#
-#  Files live in the ESPHome config folder: images/radio/
-#  Adjust the file names below if yours differ.
-#  The station names must match the Sonos favourite / media_channel.
-#############################################################
-
-substitutions:
-  logo_dr_p1: images/radio/drp1x140.png
-  logo_dr_p2: images/radio/drp2x140.png
-  logo_dr_p3: images/radio/drp3x140.png
-  logo_dr_p4: images/radio/drp4x140.png
-  logo_dr_p5: images/radio/drp5x140.png
-  logo_piano_blues: images/radio/pianobluesx140.png
-  logo_radio_soft: images/radio/radiosoftx140.png
-
-image:
-  - { platform: file, id: bath_logo_dr_p1,       file: "${logo_dr_p1}",       type: RGB565, resize: 132x132 }
-  - { platform: file, id: bath_logo_dr_p2,       file: "${logo_dr_p2}",       type: RGB565, resize: 132x132 }
-  - { platform: file, id: bath_logo_dr_p3,       file: "${logo_dr_p3}",       type: RGB565, resize: 132x132 }
-  - { platform: file, id: bath_logo_dr_p4,       file: "${logo_dr_p4}",       type: RGB565, resize: 132x132 }
-  - { platform: file, id: bath_logo_dr_p5,       file: "${logo_dr_p5}",       type: RGB565, resize: 132x132 }
-  - { platform: file, id: bath_logo_piano_blues, file: "${logo_piano_blues}", type: RGB565, resize: 132x132 }
-  - { platform: file, id: bath_logo_radio_soft,  file: "${logo_radio_soft}",  type: RGB565, resize: 132x132 }
+# Moved to packages/radio/logos.yaml (shared). Kept so older paths keep working.
+packages:
+  radio_logos: !include ../../packages/radio/logos.yaml

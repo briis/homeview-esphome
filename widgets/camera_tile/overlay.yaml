@@ -1,0 +1,70 @@
+# ---------------------------------------------------------------
+#  Widget: Camera tile — full-screen view (goes in lvgl: top_layer:)
+#  vars: uid, title, big_w, big_h
+#  Tap anywhere (or ×) to close.
+#  Pair with widgets/camera_tile/data.yaml (same uid).
+# ---------------------------------------------------------------
+obj:
+  id: ${uid}_overlay
+  width: 100%
+  height: 100%
+  bg_color: 0x000000
+  bg_opa: COVER
+  hidden: true
+  clickable: true
+  scrollable: false
+  on_click:
+    - script.execute: ${uid}_close
+  widgets:
+    - label:
+        id: ${uid}_big_placeholder
+        align: CENTER
+        text: "\U000F07AE"
+        text_font: hv_icons_lg
+        text_color: 0x48484A
+    - image:
+        id: ${uid}_big
+        align: CENTER
+        src: ${uid}_big_img
+        hidden: true
+        clickable: false
+    # title
+    - obj:
+        x: 20
+        y: 20
+        width: SIZE_CONTENT
+        height: SIZE_CONTENT
+        styles: hv_chip
+        bg_opa: 80%
+        clickable: false
+        scrollable: false
+        layout:
+          type: FLEX
+          flex_flow: ROW
+          flex_align_cross: CENTER
+          pad_column: 6
+        widgets:
+          - label:
+              text: "\U000F07AE"
+              text_font: hv_icons_sm
+              text_color: ${c_label}
+          - label:
+              text: "${title}"
+              text_font: hv_font_footnote
+    # close
+    - button:
+        align: TOP_RIGHT
+        x: -20
+        y: 20
+        width: 48
+        height: 48
+        radius: 24
+        bg_color: 0x2C2C2E
+        bg_opa: 80%
+        on_click:
+          - script.execute: ${uid}_close
+        widgets:
+          - label:
+              align: CENTER
+              text: "\U000F0156"
+              text_font: hv_icons_md

@@ -42,12 +42,12 @@ packages:
       uid: bath_media
       entity: ${room_media_entity}
       ha_url: ${ha_url}
-      # Built-in logos from rooms/badevaerelse/logos.yaml
+      # Built-in logos from packages/radio/logos.yaml
       logo_table: >-
-        {"DR P1", id(bath_logo_dr_p1)}, {"DR P2", id(bath_logo_dr_p2)},
-        {"DR P3", id(bath_logo_dr_p3)}, {"DR P4", id(bath_logo_dr_p4)},
-        {"DR P5", id(bath_logo_dr_p5)}, {"Piano Blues", id(bath_logo_piano_blues)},
-        {"Radio Soft", id(bath_logo_radio_soft)}
+        {"DR P1", id(radio_logo_dr_p1)}, {"DR P2", id(radio_logo_dr_p2)},
+        {"DR P3", id(radio_logo_dr_p3)}, {"DR P4", id(radio_logo_dr_p4)},
+        {"DR P5", id(radio_logo_dr_p5)}, {"Piano Blues", id(radio_logo_piano_blues)},
+        {"Radio Soft", id(radio_logo_radio_soft)}
   bath_heat_data: !include
     file: ../../widgets/climate_dial/data.yaml
     vars:

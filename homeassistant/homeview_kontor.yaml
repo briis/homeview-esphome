@@ -1,0 +1,46 @@
+#############################################################
+#  HomeView – Kontor (HA package)
+#  Put next to homeview.yaml in /config/packages/
+#  Temperature + humidity come from the room's presence sensor.
+#############################################################
+
+template:
+  - sensor:
+      - name: "HomeView Kontor Temperatur"
+        unique_id: homeview_kontor_temperature
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        state: "{{ states('sensor.presence_office_temperatur') | float(none) }}"
+        availability: "{{ has_value('sensor.presence_office_temperatur') }}"
+
+      - name: "HomeView Kontor Fugtighed"
+        unique_id: homeview_kontor_humidity
+        unit_of_measurement: "%"
+        device_class: humidity
+        state_class: measurement
+        state: "{{ states('sensor.presence_office_luftfugtighed') | float(none) }}"
+        availability: "{{ has_value('sensor.presence_office_luftfugtighed') }}"
+
+      - name: "HomeView Kontor Klima Tekst"
+        unique_id: homeview_kontor_climate_text
+        state: >
+          {% set t = states('sensor.presence_office_temperatur') | float(none) %}
+          {% set h = states('sensor.presence_office_luftfugtighed') | float(none) %}
+          {% if t is number %}{{ ('%.1f' | format(t)).replace('.', ',') }}°{% else %}–{% endif %}{% if h is number %} · {{ h | round(0) | int }} % fugt{% endif %}
+
+      - name: "HomeView Kontor Dør Tekst"
+        unique_id: homeview_kontor_door_text
+        state: >
+          {{ 'Dør åben' if is_state('binary_sensor.door_sensor_office', 'on') else 'Dør lukket' }}
+
+      # Now Playing chip on the Home page ("Titel – Kunstner", or "Musik")
+      - name: "HomeView Kontor Musik Tekst"
+        unique_id: homeview_kontor_music_text
+        state: >
+          {% set p = 'media_player.sonos_office' %}
+          {% if states(p) in ['playing', 'paused'] %}
+            {% set t = state_attr(p, 'media_title') or state_attr(p, 'source') or 'Musik' %}
+            {% set a = state_attr(p, 'media_artist') %}
+            {{ (t ~ (' – ' ~ a if a else ''))[:60] }}
+          {% else %}Musik{% endif %}

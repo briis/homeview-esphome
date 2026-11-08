@@ -1,0 +1,123 @@
+#############################################################
+#  RADIO page (page id: radio_page) — shared by every room with a Sonos
+#  Opened from the radio button on the Now Playing card. Needs
+#  room_media_entity and room_title; radio_back_page is the page the
+#  back button (and picking a station) returns to.
+#  Each tile selects a Sonos favourite by its exact source_list name and
+#  shows the station's logo from logos.yaml (images/radio/ in your
+#  ESPHome folder, compiled into the firmware).
+#############################################################
+
+substitutions:
+  radio_back_page: home_page
+  radio_tile_w: "177"
+  radio_tile_h: "170"
+
+packages:
+  st1_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st1, entity: "${room_media_entity}", source: "DR P1", back_script: radio_back } }
+  st2_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st2, entity: "${room_media_entity}", source: "DR P2", back_script: radio_back } }
+  st3_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st3, entity: "${room_media_entity}", source: "DR P3", back_script: radio_back } }
+  st4_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st4, entity: "${room_media_entity}", source: "DR P4 København", back_script: radio_back } }
+  st5_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st5, entity: "${room_media_entity}", source: "DR P5 Sjælland", back_script: radio_back } }
+  st6_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st6, entity: "${room_media_entity}", source: "Piano Blues", back_script: radio_back } }
+  st7_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st7, entity: "${room_media_entity}", source: "Radio Soft", back_script: radio_back } }
+
+script:
+  - id: radio_back
+    then:
+      - lvgl.page.show:
+          id: ${radio_back_page}
+          animation: NONE
+
+lvgl:
+  pages:
+    - id: radio_page
+      styles: hv_page
+      scrollable: false
+      on_swipe_right:
+        - lvgl.page.show:
+            id: ${radio_back_page}
+            animation: NONE
+      widgets:
+        # ---------- Header with back button ----------
+        - button:
+            x: 16
+            y: 14
+            width: SIZE_CONTENT
+            height: 48
+            bg_opa: TRANSP
+            pad_left: 6
+            pad_right: 10
+            on_click:
+              - lvgl.page.show:
+                  id: ${radio_back_page}
+                  animation: NONE
+            layout:
+              type: FLEX
+              flex_flow: ROW
+              flex_align_cross: CENTER
+              flex_align_track: CENTER
+              pad_column: 2
+            widgets:
+              - label: { text: "\U000F0141", text_font: hv_icons_md, text_color: "${c_red}" }
+              - label: { text: "${room_title}", text_font: hv_font_body, text_color: "${c_red}" }
+        - label:
+            align: TOP_MID
+            y: 22
+            text: "Radio"
+            text_font: hv_font_title
+
+        # ---------- Station grid ----------
+        - obj:
+            x: 28
+            y: 92
+            width: 744
+            height: 364
+            scrollable: false
+            clickable: false
+            layout:
+              type: FLEX
+              flex_flow: ROW_WRAP
+              pad_row: 12
+              pad_column: 12
+            widgets:
+              - !include { file: ../../widgets/station_tile/ui_logo.yaml, vars: { uid: st1, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "DR P1", logo: radio_logo_dr_p1, logo_size: "132" } }
+              - !include { file: ../../widgets/station_tile/ui_logo.yaml, vars: { uid: st2, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "DR P2", logo: radio_logo_dr_p2, logo_size: "132" } }
+              - !include { file: ../../widgets/station_tile/ui_logo.yaml, vars: { uid: st3, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "DR P3", logo: radio_logo_dr_p3, logo_size: "132" } }
+              - !include { file: ../../widgets/station_tile/ui_logo.yaml, vars: { uid: st4, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "DR P4", logo: radio_logo_dr_p4, logo_size: "132" } }
+              - !include { file: ../../widgets/station_tile/ui_logo.yaml, vars: { uid: st5, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "DR P5", logo: radio_logo_dr_p5, logo_size: "132" } }
+              - !include { file: ../../widgets/station_tile/ui_logo.yaml, vars: { uid: st6, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "Piano Blues", logo: radio_logo_piano_blues, logo_size: "132" } }
+              - !include { file: ../../widgets/station_tile/ui_logo.yaml, vars: { uid: st7, width: "${radio_tile_w}", height: "${radio_tile_h}", label: "Radio Soft", logo: radio_logo_radio_soft, logo_size: "132" } }
+              # Stop tile
+              - button:
+                  width: ${radio_tile_w}
+                  height: ${radio_tile_h}
+                  radius: ${r_tile}
+                  pad_all: 0
+                  bg_color: ${c_platter}
+                  bg_opa: COVER
+                  pressed:
+                    transform_width: -4
+                    transform_height: -4
+                  on_click:
+                    - homeassistant.action:
+                        action: media_player.media_pause
+                        data:
+                          entity_id: ${room_media_entity}
+                    - lvgl.page.show:
+                        id: ${radio_back_page}
+                        animation: NONE
+                  widgets:
+                    - obj:
+                        align: TOP_MID
+                        y: 8
+                        width: 132
+                        height: 132
+                        radius: 14
+                        bg_color: ${c_platter_2}
+                        bg_opa: COVER
+                        clickable: false
+                        scrollable: false
+                        widgets:
+                          - label: { align: CENTER, text: "\U000F04DB", text_font: hv_icons_lg, text_color: "${c_label}" }
+                    - label: { align: BOTTOM_MID, y: -7, text: "Stop", text_font: hv_font_footnote, text_color: "${c_label_2}" }

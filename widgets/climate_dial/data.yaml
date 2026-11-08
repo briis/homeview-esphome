@@ -1,71 +1,17 @@
 # ---------------------------------------------------------------
-#  Widget data: Climate dial
+#  Widget data: Climate dial with a PRESET toggle
 #  vars: uid, entity, min_half, max_half,
 #        preset_on, preset_off, preset_on_label, preset_off_label
 #    preset_on/off = HA preset_mode values the toggle switches between
 #                    (Roth: constant_temperature / default)
+#  For a thermostat without presets (on/off only) use data_onoff.yaml.
 # ---------------------------------------------------------------
-globals:
-  - id: ${uid}_target_half
-    type: int
-    initial_value: "0"
-  - id: ${uid}_hold
-    type: uint32_t
-    initial_value: "0"
-
-sensor:
-  - platform: homeassistant
-    id: ${uid}_target_ha
-    entity_id: ${entity}
-    attribute: temperature
-    internal: true
-    filters:
-      - filter_out: nan
-    on_value:
-      # Don't fight the user while they are adjusting
-      - if:
-          condition:
-            lambda: 'return millis() - id(${uid}_hold) > 4000;'
-          then:
-            - lambda: 'id(${uid}_target_half) = (int) lroundf(x * 2.0f);'
-            - lvgl.arc.update:
-                id: ${uid}_arc
-                value: !lambda 'return id(${uid}_target_half);'
-            - lvgl.label.update:
-                id: ${uid}_target
-                text: !lambda 'return hv::fmt_da(x, 1) + "°";'
-
-  - platform: homeassistant
-    id: ${uid}_current_ha
-    entity_id: ${entity}
-    attribute: current_temperature
-    internal: true
-    filters:
-      - filter_out: nan
-    on_value:
-      - lvgl.label.update:
-          id: ${uid}_current
-          text: !lambda |-
-            std::string s = "Nu " + hv::fmt_da(x, 1) + "°";
-            return s;
+packages:
+  ${uid}_core: !include
+    file: data_core.yaml
+    vars: { uid: "${uid}", entity: "${entity}", min_half: "${min_half}", max_half: "${max_half}", step_half: "1" }
 
 text_sensor:
-  - platform: homeassistant
-    id: ${uid}_action_ha
-    entity_id: ${entity}
-    attribute: hvac_action
-    internal: true
-    on_value:
-      - lambda: |-
-          const bool heating = (x == "heating");
-          const char *txt = heating ? "Varmer op" : (x == "idle") ? "Holder temp." :
-                            (x == "off") ? "Slukket" : "";
-          lv_label_set_text(id(${uid}_action), txt);
-          lv_obj_set_style_text_color(id(${uid}_action_icon),
-              lv_color_hex(heating ? ${c_orange} : ${c_label_3}), LV_PART_MAIN);
-          lv_obj_set_style_arc_color(id(${uid}_arc),
-              lv_color_hex(heating ? ${c_orange} : 0x8E8E93), LV_PART_INDICATOR);
-
   - platform: homeassistant
     id: ${uid}_preset_ha
     entity_id: ${entity}
@@ -81,49 +27,6 @@ text_sensor:
               lv_color_hex(on ? ${c_orange} : ${c_label}), LV_PART_MAIN);
 
 script:
-  # -/+ buttons: 0.5° per tap, sent once you stop tapping
-  - id: ${uid}_step
-    parameters:
-      delta: int
-    then:
-      - lambda: |-
-          int v = id(${uid}_target_half);
-          if (v == 0) v = (int) lroundf(id(${uid}_target_ha).state * 2.0f);
-          v = std::max(${min_half}, std::min(${max_half}, v + delta));
-          id(${uid}_target_half) = v;
-          id(${uid}_hold) = millis();
-      - lvgl.arc.update:
-          id: ${uid}_arc
-          value: !lambda 'return id(${uid}_target_half);'
-      - lvgl.label.update:
-          id: ${uid}_target
-          text: !lambda 'return hv::fmt_da(id(${uid}_target_half) / 2.0f, 1) + "°";'
-      - script.execute: ${uid}_send
-
-  - id: ${uid}_set_target
-    parameters:
-      half: int
-    then:
-      - lambda: |-
-          id(${uid}_target_half) = half;
-          id(${uid}_hold) = millis();
-      - script.execute: ${uid}_send
-
-  # Debounced send (restart mode: only the last value within 1.2 s is sent)
-  - id: ${uid}_send
-    mode: restart
-    then:
-      - delay: 1200ms
-      - lambda: 'id(${uid}_hold) = millis();'
-      - homeassistant.action:
-          action: climate.set_temperature
-          data:
-            entity_id: ${entity}
-          data_template:
-            temperature: "{{ t }}"
-          variables:
-            t: !lambda 'return str_sprintf("%.1f", id(${uid}_target_half) / 2.0f);'
-
   - id: ${uid}_toggle_preset
     then:
       - homeassistant.action:

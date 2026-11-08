@@ -1,0 +1,302 @@
+#############################################################
+#  ROOM: Kontor — Home page (home_page) + Musik page (music_page)
+#
+#   HOME
+#   ┌ Kontor ──────────────────────────────── SØNDAG 8. NOV. 14:15 ┐
+#   │ [22,0° · 42 %] [Dør lukket] [♪ Titel – Kunstner ›]            │
+#   │ ┌ Indkørsel (camera) ────┐ ┌ Radiator ─────────────────────┐  │
+#   │ │                        │ │  (dial)   status  [−] [+]     │  │
+#   │ │                        │ │           [Tændt]             │  │
+#   │ └────────────────────────┘ └───────────────────────────────┘  │
+#   │ [ Loftslys ]        [ Toilet ]        [ Arbejdsbord ]         │
+#   └───────────────────────────────────────────────────────────────┘
+#   MUSIK  (‹ Kontor)
+#   │ ┌ Now Playing ───────────┐ ┌ Indkørsel (camera) ───────────┐  │
+#   │ │ cover, title, controls │ └───────────────────────────────┘  │
+#   │ │ volume, 📻 → Radio      │ [          📻 Radio  ›          ]  │
+#   │ └────────────────────────┘                                    │
+#  The Now Playing chip on Home (or swiping left) opens Musik.
+#  Radio: packages/radio/page.yaml (set radio_back_page: music_page).
+#  Geometry is for 800x480 (5" and 4.3B).
+#############################################################
+
+# Defaults; set them in the device file to change them.
+substitutions:
+  room_art_camera: camera.homeview_kontor_cover
+
+packages:
+  kon_header_data: !include
+    file: ../../widgets/page_header/data.yaml
+    vars: { uid: kon_header, time_id: hv_time }
+  kon_chip_climate_data: !include
+    file: ../../widgets/status_chip/data.yaml
+    vars: { uid: kon_chip_climate, entity: "${room_climate_text_entity}" }
+  kon_chip_door_data: !include
+    file: ../../widgets/status_chip/data.yaml
+    vars: { uid: kon_chip_door, entity: "${room_door_text_entity}" }
+  kon_chip_music_data: !include
+    file: ../../widgets/status_chip/data.yaml
+    vars: { uid: kon_chip_music, entity: "${room_music_text_entity}" }
+
+  kon_cam1_data: !include
+    file: ../../widgets/camera_tile/data.yaml
+    vars:
+      uid: kon_cam1
+      title: "${room_camera_name}"
+      camera_entity: ${room_camera_entity}
+      ha_url: ${ha_url}
+      tile_page: home_page
+      small_w: "384"
+      small_h: "216"
+      big_w: "800"
+      big_h: "450"
+      open_seconds: "60"
+      tile_refresh_s: "2"
+  kon_cam2_data: !include
+    file: ../../widgets/camera_tile/data.yaml
+    vars:
+      uid: kon_cam2
+      title: "${room_camera_name}"
+      camera_entity: ${room_camera_entity}
+      ha_url: ${ha_url}
+      tile_page: music_page
+      small_w: "360"
+      small_h: "203"
+      big_w: "800"
+      big_h: "450"
+      open_seconds: "60"
+      tile_refresh_s: "3"
+
+  kon_heat_data: !include
+    file: ../../widgets/climate_dial/data_onoff.yaml
+    vars:
+      uid: kon_heat
+      entity: ${room_climate_entity}
+      min_half: "20"      # 10 °C
+      max_half: "56"      # 28 °C
+      step_half: "2"      # whole degrees
+      on_mode: heat
+
+  kon_light1_data: !include
+    file: ../../widgets/home_tile/data.yaml
+    vars: { uid: kon_light1, entity: "${room_light1_entity}", on_color: "0xFFB300", toggle_action: "${room_light1_toggle}", on_text: "Til", off_text: "Fra" }
+  kon_light2_data: !include
+    file: ../../widgets/home_tile/data.yaml
+    vars: { uid: kon_light2, entity: "${room_light2_entity}", on_color: "0xFFB300", toggle_action: "${room_light2_toggle}", on_text: "Til", off_text: "Fra" }
+  kon_light3_data: !include
+    file: ../../widgets/home_tile/data.yaml
+    vars: { uid: kon_light3, entity: "${room_light3_entity}", on_color: "0xFFB300", toggle_action: "${room_light3_toggle}", on_text: "Til", off_text: "Fra" }
+
+  kon_logos: !include ../../packages/radio/logos.yaml
+  kon_media_art: !include
+    file: ../../widgets/media_player/art_camera.yaml
+    vars: { uid: kon_media, camera_entity: "${room_art_camera}" }
+  kon_media_data: !include
+    file: ../../widgets/media_player/data.yaml
+    vars:
+      uid: kon_media
+      entity: ${room_media_entity}
+      ha_url: ${ha_url}
+      # Built-in logos from packages/radio/logos.yaml
+      logo_table: >-
+        {"DR P1", id(radio_logo_dr_p1)}, {"DR P2", id(radio_logo_dr_p2)},
+        {"DR P3", id(radio_logo_dr_p3)}, {"DR P4", id(radio_logo_dr_p4)},
+        {"DR P5", id(radio_logo_dr_p5)}, {"Piano Blues", id(radio_logo_piano_blues)},
+        {"Radio Soft", id(radio_logo_radio_soft)}
+
+lvgl:
+  top_layer:
+    widgets:
+      - !include
+        file: ../../widgets/camera_tile/overlay.yaml
+        vars: { uid: kon_cam1, title: "${room_camera_name}", big_w: 800, big_h: 450 }
+      - !include
+        file: ../../widgets/camera_tile/overlay.yaml
+        vars: { uid: kon_cam2, title: "${room_camera_name}", big_w: 800, big_h: 450 }
+
+  pages:
+    # ================= HOME =================
+    - id: home_page
+      styles: hv_page
+      scrollable: false
+      on_swipe_right:
+        - script.execute: homeview_user_activity
+        - script.execute: homeview_show_face
+      on_swipe_left:
+        - script.execute: homeview_user_activity
+        - lvgl.page.show:
+            id: music_page
+            animation: NONE
+      widgets:
+        - !include
+          file: ../../widgets/page_header/ui.yaml
+          vars: { uid: kon_header, title: "${room_title}", margin: 28 }
+
+        # ---------- Status chips (+ Now Playing chip → Musik) ----------
+        - obj:
+            x: 28
+            y: 72
+            width: 744
+            height: SIZE_CONTENT
+            scrollable: false
+            clickable: false
+            layout:
+              type: FLEX
+              flex_flow: ROW
+              flex_align_cross: CENTER
+              pad_column: 10
+            widgets:
+              - !include
+                file: ../../widgets/status_chip/ui.yaml
+                vars: { uid: kon_chip_climate, icon: "\U000F058E", icon_color: "${c_teal}" }
+              - !include
+                file: ../../widgets/status_chip/ui.yaml
+                vars: { uid: kon_chip_door, icon: "\U000F081B", icon_color: "${c_label_2}" }
+              - button:
+                  flex_grow: 1
+                  height: 44
+                  styles: hv_chip
+                  pad_left: 14
+                  pad_right: 10
+                  pressed:
+                    bg_color: 0x3A3A3C
+                  on_click:
+                    - script.execute: homeview_user_activity
+                    - lvgl.page.show:
+                        id: music_page
+                        animation: NONE
+                  layout:
+                    type: FLEX
+                    flex_flow: ROW
+                    flex_align_cross: CENTER
+                    flex_align_track: CENTER
+                    pad_column: 8
+                  widgets:
+                    - label:
+                        text: "\U000F075A"
+                        text_font: hv_icons_sm
+                        text_color: ${c_red}
+                    - label:
+                        id: kon_chip_music_text
+                        flex_grow: 1
+                        long_mode: DOT
+                        text: "Musik"
+                        text_font: hv_font_footnote
+                    - label:
+                        text: "\U000F0142"
+                        text_font: hv_icons_sm
+                        text_color: ${c_label_2}
+
+        # ---------- Camera ----------
+        - !include
+          file: ../../widgets/camera_tile/ui.yaml
+          vars: { uid: kon_cam1, x: 28, y: 130, width: 372, height: 216, title: "${room_camera_name}" }
+
+        # ---------- Radiator ----------
+        - !include
+          file: ../../widgets/climate_dial/ui.yaml
+          vars:
+            uid: kon_heat
+            x: 412
+            y: 130
+            width: 360
+            height: 216
+            title: "${room_climate_name}"
+            min_half: "20"
+            max_half: "56"
+            preset_on_label: "Tændt"
+            preset_off_label: "Slukket"
+
+        # ---------- Lights ----------
+        - obj:
+            x: 28
+            y: 358
+            width: 744
+            height: 100
+            scrollable: false
+            clickable: false
+            layout:
+              type: FLEX
+              flex_flow: ROW
+              pad_column: 12
+            widgets:
+              - !include
+                file: ../../widgets/home_tile/ui.yaml
+                vars: { uid: kon_light1, width: 240, height: 100, name: "${room_light1_name}", icon: "${room_light1_icon}", on_color: "0xFFB300" }
+              - !include
+                file: ../../widgets/home_tile/ui.yaml
+                vars: { uid: kon_light2, width: 240, height: 100, name: "${room_light2_name}", icon: "${room_light2_icon}", on_color: "0xFFB300" }
+              - !include
+                file: ../../widgets/home_tile/ui.yaml
+                vars: { uid: kon_light3, width: 240, height: 100, name: "${room_light3_name}", icon: "${room_light3_icon}", on_color: "0xFFB300" }
+
+    # ================= MUSIK =================
+    - id: music_page
+      styles: hv_page
+      scrollable: false
+      on_swipe_right:
+        - script.execute: homeview_user_activity
+        - lvgl.page.show:
+            id: home_page
+            animation: NONE
+      widgets:
+        - button:
+            x: 16
+            y: 14
+            width: SIZE_CONTENT
+            height: 48
+            bg_opa: TRANSP
+            pad_left: 6
+            pad_right: 10
+            on_click:
+              - lvgl.page.show:
+                  id: home_page
+                  animation: NONE
+            layout:
+              type: FLEX
+              flex_flow: ROW
+              flex_align_cross: CENTER
+              flex_align_track: CENTER
+              pad_column: 2
+            widgets:
+              - label: { text: "\U000F0141", text_font: hv_icons_md, text_color: "${c_red}" }
+              - label: { text: "${room_title}", text_font: hv_font_body, text_color: "${c_red}" }
+        - label:
+            align: TOP_MID
+            y: 22
+            text: "Musik"
+            text_font: hv_font_title
+
+        - !include
+          file: ../../widgets/media_player/ui.yaml
+          vars: { uid: kon_media, x: 28, y: 130, width: 372, height: 330, radio_page: radio_page }
+
+        - !include
+          file: ../../widgets/camera_tile/ui.yaml
+          vars: { uid: kon_cam2, x: 412, y: 130, width: 360, height: 203, title: "${room_camera_name}" }
+
+        - button:
+            x: 412
+            y: 345
+            width: 360
+            height: 115
+            styles: hv_tile_off
+            pressed:
+              transform_width: -4
+              transform_height: -4
+            on_click:
+              - script.execute: homeview_user_activity
+              - lvgl.page.show:
+                  id: radio_page
+                  animation: NONE
+            layout:
+              type: FLEX
+              flex_flow: ROW
+              flex_align_main: CENTER
+              flex_align_cross: CENTER
+              flex_align_track: CENTER
+              pad_column: 12
+            widgets:
+              - label: { text: "\U000F0439", text_font: hv_icons_md, text_color: "${c_red}" }
+              - label: { text: "Radio", text_font: hv_font_title }
+              - label: { text: "\U000F0142", text_font: hv_icons_sm, text_color: "${c_label_2}" }

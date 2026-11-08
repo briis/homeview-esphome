@@ -1,0 +1,40 @@
+# ---------------------------------------------------------------
+#  Widget data: Climate dial with an ON/OFF toggle (hvac_mode)
+#  For radiators / heaters without presets (e.g. Adax: heat / off).
+#  vars: uid, entity, min_half, max_half, step_half, on_mode
+#    on_mode   = the hvac_mode used for "on" (usually heat)
+#    step_half = 2 for thermostats that only take whole degrees
+#  Pair with widgets/climate_dial/ui.yaml (same uid); pass
+#  preset_on_label: "Tændt" and preset_off_label: "Slukket" to the UI.
+# ---------------------------------------------------------------
+packages:
+  ${uid}_core: !include
+    file: data_core.yaml
+    vars: { uid: "${uid}", entity: "${entity}", min_half: "${min_half}", max_half: "${max_half}", step_half: "${step_half}" }
+
+text_sensor:
+  - platform: homeassistant
+    id: ${uid}_mode_ha
+    entity_id: ${entity}
+    internal: true
+    on_value:
+      - lambda: |-
+          const bool on = (x != "off" && x != "unavailable" && x != "unknown");
+          if (on) lv_obj_add_state(id(${uid}_preset), LV_STATE_CHECKED);
+          else    lv_obj_clear_state(id(${uid}_preset), LV_STATE_CHECKED);
+          lv_label_set_text(id(${uid}_preset_label), on ? "Tændt" : "Slukket");
+          lv_obj_set_style_text_color(id(${uid}_preset_label),
+              lv_color_hex(on ? ${c_orange} : ${c_label}), LV_PART_MAIN);
+
+script:
+  # the UI's toggle button calls this name
+  - id: ${uid}_toggle_preset
+    then:
+      - homeassistant.action:
+          action: climate.set_hvac_mode
+          data:
+            entity_id: ${entity}
+          data_template:
+            hvac_mode: "{{ m }}"
+          variables:
+            m: !lambda 'return id(${uid}_mode_ha).state == "off" ? std::string("${on_mode}") : std::string("off");'

@@ -160,6 +160,8 @@ font:
       "\U000F11DC", "\U000F04C3", "\U000F05E0", "\U000F075A", "\U000F04DB",
       # doorbell / doors / lights (Stue)
       "\U000F091C", "\U000F12E6", "\U000F0869", "\U000F081B", "\U000F081C", "\U000F05E2",
+      # Kontor: cctv, desk lamp, toilet
+      "\U000F07AE", "\U000F09AB",
       "\U000F0156", "\U000F009E",
       # alarm / keypad / leak (Bryggers)
       "\U000F099C", "\U000F0565", "\U000F1828", "\U000F099D", "\U000F0ECC",
@@ -174,7 +176,7 @@ font:
     file: ${fonts_dir}/materialdesignicons-webfont.ttf
     size: 48
     glyphs: ["\U000F040A", "\U000F03E4", "\U000F04AE", "\U000F04AD", "\U000F0387", "\U000F0439", "\U000F0869", "\U000F12E6",
-             "\U000F099C", "\U000F068A", "\U000F1828", "\U000F099D", "\U000F0ECC", "\U000F051F", "\U000F1502", "\U000F0238", "\U000F04DB"]
+             "\U000F099C", "\U000F068A", "\U000F1828", "\U000F099D", "\U000F0ECC", "\U000F051F", "\U000F1502", "\U000F0238", "\U000F04DB", "\U000F07AE"]
 
 #############################################################
 #  LVGL BASE

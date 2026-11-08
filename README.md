@@ -22,6 +22,7 @@ and adds its own pages from `rooms/<room>/`.
 | `homeview-badevaerelse.yaml` | Face (bath temp + humidity) · Home (Now Playing, floor heating, light, Nilan ventilation speed) · Radio (Sonos favourites) |
 | `homeview-bryggers.yaml` | **4.3B board.** Face (utility-room temp + humidity) · Home (alarm: status, arm Hjemme/Nat/Ude, PIN keypad to disarm; floor heating; front-door lock; light; door/window/salt chips) · full-screen water-leak and fire alerts |
 | `homeview-stue.yaml` | Face (living-room temp + humidity) · Home (doorbell camera, floor heating, three lights, window + door chips) · full-screen doorbell view when someone rings |
+| `homeview-kontor.yaml` | **4.3B board, HA presence sensor.** Face (office temp + humidity) · Home (climate/door chips, Now Playing chip → Musik, driveway camera, radiator on/off + dial, three lights) · Musik (Now Playing, camera, Radio button) · Radio |
 
 | Badeværelse – Home | Radio |
 |---|---|
@@ -34,6 +35,10 @@ and adds its own pages from `rooms/<room>/`.
 | Stue – Home | Stue – doorbell rings |
 |---|---|
 | ![](docs/stue_home.png) | ![](docs/stue_doorbell.png) |
+
+| Kontor – Home | Kontor – Musik |
+|---|---|
+| ![](docs/kontor_home.png) | ![](docs/kontor_music.png) |
 
 **Adding a room:** copy `homeview-badevaerelse.yaml` to `homeview-<room>.yaml`, and copy `rooms/badevaerelse/`
 to `rooms/<room>/`. Change `device_name` and the `room_*` entities, then rearrange the widget includes.
@@ -76,7 +81,8 @@ packages/
   sensors/proximity-ld2410.yaml        mmWave over UART (read the pin warning)
   sensors/proximity-homeassistant.yaml use any existing HA presence sensor
   pages/face.yaml, pages/home.yaml
-rooms/<room>/home.yaml                 room pages (badevaerelse, stue, bryggers)
+rooms/<room>/home.yaml                 room pages (badevaerelse, stue, bryggers, kontor)
+packages/radio/page.yaml + logos.yaml   shared Sonos radio page (radio_back_page = where Back goes)
 widgets/<name>/ui.yaml + data.yaml     reusable widgets
 components/homeview/                   external component with the C++ helpers
                                        (Danish names, weather glyphs, number formatting)
@@ -122,7 +128,8 @@ Widgets depend only on `packages/core/theme.yaml` (styles, fonts and the `homevi
 | `media_player` | Now Playing: artwork (via HA media proxy), title/artist, ⏮ ⏯ ⏭, live volume slider, radio button |
 | `stepper_tile` | Home-style tile for a number entity with − / + (e.g. ventilation speed), limited to a min/max |
 | `station_tile` | radio station card that selects a Sonos favourite; highlights the one playing. `ui_logo.yaml` shows the station's own logo (from `logos.yaml`) instead of the gradient |
-| `climate_dial` | thermostat arc (drag or −/+ in 0.5° steps, debounced), heating state, preset toggle |
+| `climate_dial` | thermostat arc (drag or −/+ in 0.5° steps, debounced), heating state, preset toggle. `data_onoff.yaml` is for heaters without presets (e.g. Adax): the button toggles hvac_mode off ↔ heat, and `step_half: "2"` gives whole degrees |
+| `camera_tile` | any camera (no doorbell): snapshot tile with LIVE badge, refreshed while its page is shown; tap for full screen (`overlay.yaml`, goes in `top_layer`) |
 | `alarm_panel` | alarm status card (Frakoblet/Hjemme/Nat/Tilkoblet, exit countdown, ALARM) with Nat/Ude arm buttons behind a confirmation dialog (`confirm.yaml`), plus a PIN keypad (`keypad.yaml`, top layer) that sends the typed PIN to an HA script; HA checks the PIN, counts wrong attempts and locks out |
 | `alert_overlay` | full-screen warning while a binary sensor is on (water leak, fire); wakes the screen, "Luk" snoozes it |
 | `doorbell_camera` | camera tile (snapshot refreshed every 2 s, LIVE/RINGER badge) + full-screen view (`overlay.yaml`, goes in `top_layer`) that opens when the doorbell rings; snapshots come scaled from HA's camera proxy, ~1 fps full screen |
@@ -188,7 +195,7 @@ packages:
   a 4.3B mounted with the USB socket on the other side (the files list includes
   `packages/core/rotation-${display_rotation}.yaml`). 180° costs one extra full-screen buffer
   (~750 KB PSRAM), so `"0"` adds nothing.
-- **Radio logos** (`rooms/badevaerelse/logos.yaml`) are not in the repo. Put the PNGs in
+- **Radio logos** (`packages/radio/logos.yaml`) are not in the repo. Put the PNGs in
   `images/radio/` next to your device file.
 - **Home Assistant packages** (`homeassistant/*.yaml`) still need copying into `/config/packages/`.
 

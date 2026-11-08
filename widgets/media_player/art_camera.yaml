@@ -1,0 +1,29 @@
+# ---------------------------------------------------------------
+#  Widget data (optional): fetch music covers through an HA camera
+#  vars: uid, camera_entity
+#
+#  Some covers (e.g. Spotify via Sonos) are JPEG variants the ESP32's
+#  decoder can't read ("Could not open image for decoding: 3"). A
+#  Generic Camera in Home Assistant whose still image is the media
+#  player's current cover fixes that: HA's camera proxy scales the
+#  image to 132x132 and re-encodes it as a plain JPEG.
+#
+#  Home Assistant: Settings › Devices & services › Add integration ›
+#  Generic Camera, with
+#    Still image URL: http://<HA address>{{ state_attr('media_player.<player>', 'entity_picture') }}
+#    Stream source:   (empty)
+#    Verify SSL:      off
+#    Limit refetch to URL change: on
+#  If camera_entity doesn't exist, covers come straight from the
+#  media proxy as before.
+#  Pair with widgets/media_player/data.yaml (same uid).
+# ---------------------------------------------------------------
+text_sensor:
+  - platform: homeassistant
+    id: ${uid}_art_cam_ha
+    entity_id: ${camera_entity}
+    attribute: entity_picture
+    internal: true
+    on_value:
+      - lambda: |-
+          id(${uid}_art_cam_pic) = (x == "None" || x == "unknown" || x == "unavailable") ? std::string() : x;

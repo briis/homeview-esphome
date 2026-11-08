@@ -19,6 +19,8 @@ substitutions:
   room_vent_name: "Ventilation"
   room_vent_min: "1"     # the display can't switch the ventilation off
   room_vent_max: "4"
+  # HA Generic Camera showing the Sonos cover (see widgets/media_player/art_camera.yaml)
+  room_art_camera: camera.homeview_badevaerelse_cover
 
 packages:
   bath_logos: !include logos.yaml
@@ -31,6 +33,9 @@ packages:
   bath_chip_window_data: !include
     file: ../../widgets/status_chip/data.yaml
     vars: { uid: bath_chip_window, entity: "${room_window_text_entity}" }
+  bath_media_art: !include
+    file: ../../widgets/media_player/art_camera.yaml
+    vars: { uid: bath_media, camera_entity: "${room_art_camera}" }
   bath_media_data: !include
     file: ../../widgets/media_player/data.yaml
     vars:

@@ -240,6 +240,10 @@ image:
             - lvgl.widget.show: ${uid}_art_placeholder
 
 globals:
+  # camera_proxy path of an HA camera that shows the current cover
+  # (art_camera.yaml). Empty = fetch covers straight from the media proxy.
+  - id: ${uid}_art_cam_pic
+    type: std::string
   - id: ${uid}_art_keys
     type: std::array<std::string, 9>
   - id: ${uid}_art_loaded
@@ -356,6 +360,15 @@ script:
           }
           // 2) Download cache
           std::string url = pic.rfind("http", 0) == 0 ? pic : std::string("${ha_url}") + pic;
+          // Music covers via the HA cover camera (if configured): HA scales the
+          // image and re-encodes it as a plain JPEG the decoder can always read.
+          // (Covers from Sonos/Spotify can be "extended" JPEGs -> JPEGDEC error 3.)
+          if (ch.empty() && !id(${uid}_art_cam_pic).empty()) {
+            const std::string &cam = id(${uid}_art_cam_pic);
+            url = cam.rfind("http", 0) == 0 ? cam : std::string("${ha_url}") + cam;
+            url += (url.find('?') == std::string::npos) ? "?" : "&";
+            url += "width=132&height=132&t=" + to_string(millis());
+          }
           int slot = 0;                        // music: always fetch into slot 0
           if (!ch.empty()) {
             for (int i = 1; i < n; i++) {     // cache hit -> instant

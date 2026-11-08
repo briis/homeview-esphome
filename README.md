@@ -180,6 +180,10 @@ packages:
   `fonts_dir` downloads the fonts from the same tag.
 - **Updating:** change `homeview_ref` to a newer tag and reinstall. Pinning a tag means a push to
   `main` never changes a device by surprise.
+- **Presence source:** `proximity_source: vl53l0x` uses the distance sensor in the case;
+  `proximity_source: homeassistant` uses any motion / presence `binary_sensor` from Home Assistant
+  instead (`proximity_entity`, plus `proximity_hold` to keep the screen awake after a PIR sensor
+  drops back to clear). No sensor needs to be mounted in the case then.
 - **Radio logos** (`rooms/badevaerelse/logos.yaml`) are not in the repo. Put the PNGs in
   `images/radio/` next to your device file.
 - **Home Assistant packages** (`homeassistant/*.yaml`) still need copying into `/config/packages/`.

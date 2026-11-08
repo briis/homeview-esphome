@@ -1,19 +1,33 @@
 #############################################################
-#  PROXIMITY: re-use an existing Home Assistant presence sensor
+#  PROXIMITY: re-use a motion / presence sensor from Home Assistant
 #
-#  Handy before the physical sensor is mounted, or when the room already
-#  has an mmWave sensor (e.g. an ESPHome LD2410 presence node).
-#  Set  proximity_entity  to any binary_sensor / input_boolean.
+#  For rooms where you don't want to mount the VL53L0X: any
+#  binary_sensor / input_boolean in Home Assistant (PIR motion,
+#  mmWave presence, an occupancy group, ...) wakes the display.
+#
+#    proximity_entity:   the entity to follow
+#    proximity_hold:     keep "near" this long after it turns off.
+#                        Handy for PIR motion sensors that drop back to
+#                        "clear" quickly while you're still in the room.
+#                        0s for real presence (mmWave) sensors.
+#
+#  Note: a room sensor says "someone is in the room", not "someone is in
+#  front of the display", so the screen wakes when you enter the room.
 #
 #  Provides: binary_sensor id hv_proximity  (contract for presence.yaml)
 #############################################################
 
 substitutions:
   proximity_entity: binary_sensor.presence_bedroom_presence
+  proximity_hold: 0s
 
 binary_sensor:
   - platform: homeassistant
     id: hv_proximity
+    name: "Nærhed"
+    device_class: occupancy
     entity_id: ${proximity_entity}
+    filters:
+      - delayed_off: ${proximity_hold}
     on_state:
       - script.execute: homeview_proximity_changed

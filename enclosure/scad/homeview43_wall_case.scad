@@ -26,11 +26,11 @@
 //  drawing. The outline 112.4 x 75.1 mm is from Waveshare's spec.
 // =====================================================================
 
-PART = "assembly";
+PART = "assembly";      // "front" | "white" | "black" | "back" | "testfit" | "sensorinsert" | "sensortest" | "assembly"
 // sensor = true : HomeView case with the VL53L0X mount in a 28 mm chin (hangs one way up).
 // sensor = false: "plain" case, no sensor: 12 mm bands top and bottom, symmetric, with
 //                 keyholes at both ends so it hangs either way up (rotate the display in firmware).
-sensor = true;      // "front" | "back" | "testfit" | "sensorinsert" | "sensortest" | "assembly"
+sensor = true;      // plain-case STLs: openscad -D 'sensor=false' -D 'PART="front"' ...
 
 /* ---------- Display module (Waveshare) ---------- */
 glass_w        = 112.4;   // module/glass width  (Waveshare spec, +-0.1)

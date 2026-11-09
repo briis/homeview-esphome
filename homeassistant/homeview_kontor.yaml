@@ -44,3 +44,13 @@ template:
             {% set a = state_attr(p, 'media_artist') %}
             {{ (t ~ (' – ' ~ a if a else ''))[:60] }}
           {% else %}Musik{% endif %}
+
+      # Mirrors the Sonos for the display: title / artist / channel are
+      # always present ("" when missing), so the display can clear them.
+      - name: "HomeView Kontor Medie"
+        unique_id: homeview_kontor_media
+        state: "{{ states('media_player.sonos_office') }}"
+        attributes:
+          title: "{{ state_attr('media_player.sonos_office', 'media_title') or '' }}"
+          artist: "{{ state_attr('media_player.sonos_office', 'media_artist') or '' }}"
+          channel: "{{ state_attr('media_player.sonos_office', 'media_channel') or '' }}"

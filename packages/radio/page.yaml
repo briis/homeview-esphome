@@ -1,7 +1,7 @@
 #############################################################
 #  RADIO page (page id: radio_page) — shared by every room with a Sonos
 #  Opened from the radio button on the Now Playing card. Needs
-#  room_media_entity and room_title; radio_back_page is the page the
+#  room_media_entity, room_media_meta_entity and room_title; radio_back_page is the page the
 #  back button (and picking a station) returns to.
 #  Each tile selects a Sonos favourite by its exact source_list name and
 #  shows the station's logo from logos.yaml (images/radio/ in your
@@ -14,13 +14,13 @@ substitutions:
   radio_tile_h: "170"
 
 packages:
-  st1_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st1, entity: "${room_media_entity}", source: "DR P1", back_script: radio_back } }
-  st2_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st2, entity: "${room_media_entity}", source: "DR P2", back_script: radio_back } }
-  st3_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st3, entity: "${room_media_entity}", source: "DR P3", back_script: radio_back } }
-  st4_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st4, entity: "${room_media_entity}", source: "DR P4 København", back_script: radio_back } }
-  st5_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st5, entity: "${room_media_entity}", source: "DR P5 Sjælland", back_script: radio_back } }
-  st6_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st6, entity: "${room_media_entity}", source: "Piano Blues", back_script: radio_back } }
-  st7_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st7, entity: "${room_media_entity}", source: "Radio Soft", back_script: radio_back } }
+  st1_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st1, entity: "${room_media_entity}", meta_entity: "${room_media_meta_entity}", source: "DR P1", back_script: radio_back } }
+  st2_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st2, entity: "${room_media_entity}", meta_entity: "${room_media_meta_entity}", source: "DR P2", back_script: radio_back } }
+  st3_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st3, entity: "${room_media_entity}", meta_entity: "${room_media_meta_entity}", source: "DR P3", back_script: radio_back } }
+  st4_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st4, entity: "${room_media_entity}", meta_entity: "${room_media_meta_entity}", source: "DR P4 København", back_script: radio_back } }
+  st5_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st5, entity: "${room_media_entity}", meta_entity: "${room_media_meta_entity}", source: "DR P5 Sjælland", back_script: radio_back } }
+  st6_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st6, entity: "${room_media_entity}", meta_entity: "${room_media_meta_entity}", source: "Piano Blues", back_script: radio_back } }
+  st7_data: !include { file: ../../widgets/station_tile/data.yaml, vars: { uid: st7, entity: "${room_media_entity}", meta_entity: "${room_media_meta_entity}", source: "Radio Soft", back_script: radio_back } }
 
 script:
   - id: radio_back

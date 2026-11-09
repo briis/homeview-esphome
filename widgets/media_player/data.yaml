@@ -1,6 +1,17 @@
 # ---------------------------------------------------------------
 #  Widget data: Now Playing
-#  vars: uid, entity, ha_url, logo_table
+#  vars: uid, entity, meta_entity, ha_url, logo_table
+#    meta_entity = HA template sensor that mirrors the player with
+#      attributes title / artist / channel that are ALWAYS present
+#      ("" when the player has none). Needed because HA does not tell
+#      ESPHome when an attribute disappears: without it the artist of the
+#      last Spotify track stays on screen when a radio stream starts.
+#      Template (see homeassistant/homeview_badevaerelse.yaml):
+#        state: "{{ states('media_player.x') }}"
+#        attributes:
+#          title:   "{{ state_attr('media_player.x', 'media_title') or '' }}"
+#          artist:  "{{ state_attr('media_player.x', 'media_artist') or '' }}"
+#          channel: "{{ state_attr('media_player.x', 'media_channel') or '' }}"
 #    logo_table = optional built-in logos as C++ pairs, e.g.
 #      '{"DR P1", id(logo_p1)}, {"DR P2", id(logo_p2)}'
 #      (use "" for none). Matching stations show these instantly;
@@ -275,24 +286,24 @@ text_sensor:
 
   - platform: homeassistant
     id: ${uid}_title_ha
-    entity_id: ${entity}
-    attribute: media_title
+    entity_id: ${meta_entity}
+    attribute: title
     internal: true
     on_value:
       - script.execute: ${uid}_render_text
 
   - platform: homeassistant
     id: ${uid}_artist_ha
-    entity_id: ${entity}
-    attribute: media_artist
+    entity_id: ${meta_entity}
+    attribute: artist
     internal: true
     on_value:
       - script.execute: ${uid}_render_text
 
   - platform: homeassistant
     id: ${uid}_channel_ha
-    entity_id: ${entity}
-    attribute: media_channel
+    entity_id: ${meta_entity}
+    attribute: channel
     internal: true
     on_value:
       - script.execute: ${uid}_render_text

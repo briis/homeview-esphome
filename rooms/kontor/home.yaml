@@ -22,6 +22,8 @@
 
 # Defaults; set them in the device file to change them.
 substitutions:
+  # From homeassistant/homeview_kontor.yaml (title/artist/channel for the display)
+  room_media_meta_entity: sensor.homeview_kontor_medie
   room_art_camera: camera.homeview_kontor_cover
 
 packages:
@@ -96,6 +98,7 @@ packages:
     vars:
       uid: kon_media
       entity: ${room_media_entity}
+      meta_entity: ${room_media_meta_entity}
       ha_url: ${ha_url}
       # Built-in logos from packages/radio/logos.yaml
       logo_table: >-

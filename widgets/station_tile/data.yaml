@@ -1,6 +1,9 @@
 # ---------------------------------------------------------------
 #  Widget data: Radio station tile
-#  vars: uid, entity, source, back_script
+#  vars: uid, entity, meta_entity, source, back_script
+#    meta_entity = HA template sensor mirroring the player (state = player
+#                  state, attribute channel always present; see
+#                  widgets/media_player/data.yaml)
 #    source    = the favourite's name exactly as in the player's
 #                source_list (e.g. "DR P4 København")
 #    back_script = script that returns to the previous page after
@@ -9,15 +12,15 @@
 text_sensor:
   - platform: homeassistant
     id: ${uid}_channel_ha
-    entity_id: ${entity}
-    attribute: media_channel
+    entity_id: ${meta_entity}
+    attribute: channel
     internal: true
     on_value:
       - script.execute: ${uid}_render
 
   - platform: homeassistant
     id: ${uid}_state_ha
-    entity_id: ${entity}
+    entity_id: ${meta_entity}
     internal: true
     on_value:
       - script.execute: ${uid}_render

@@ -15,6 +15,8 @@
 
 # Defaults for the ventilation tile; set them in the device file to change them.
 substitutions:
+  # From homeassistant/homeview_badevaerelse.yaml (title/artist/channel for the display)
+  room_media_meta_entity: sensor.homeview_badevaerelse_medie
   room_vent_entity: number.nilan_air_circulation_ventilation_speed_set
   room_vent_name: "Ventilation"
   room_vent_min: "1"     # the display can't switch the ventilation off
@@ -41,6 +43,7 @@ packages:
     vars:
       uid: bath_media
       entity: ${room_media_entity}
+      meta_entity: ${room_media_meta_entity}
       ha_url: ${ha_url}
       # Built-in logos from packages/radio/logos.yaml
       logo_table: >-

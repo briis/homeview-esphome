@@ -37,3 +37,13 @@ template:
         unique_id: homeview_badevaerelse_window_text
         state: >
           {{ 'Vindue åbent' if is_state('binary_sensor.badevaerelse_window_bathroom', 'on') else 'Vindue lukket' }}
+
+      # Mirrors the Sonos for the display: title / artist / channel are
+      # always present ("" when missing), so the display can clear them.
+      - name: "HomeView Badeværelse Medie"
+        unique_id: homeview_badevaerelse_media
+        state: "{{ states('media_player.sonos_bathroom') }}"
+        attributes:
+          title: "{{ state_attr('media_player.sonos_bathroom', 'media_title') or '' }}"
+          artist: "{{ state_attr('media_player.sonos_bathroom', 'media_artist') or '' }}"
+          channel: "{{ state_attr('media_player.sonos_bathroom', 'media_channel') or '' }}"

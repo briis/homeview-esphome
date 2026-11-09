@@ -8,6 +8,7 @@ sources and are ready to slice.
 |---|---|---|
 | Waveshare **ESP32-S3-Touch-LCD-5** | `homeview_wall_case.scad` → `stl/5inch/` | 12 V round DC panel socket in the bottom wall |
 | Waveshare **ESP32-S3-Touch-LCD-4.3B** (Rev 1.1) | `homeview43_wall_case.scad` → `stl/4.3B/` | The board's own USB-C port, through the right side wall |
+| 4.3B **plain** (no proximity sensor, hangs either way up) | `homeview43_wall_case.scad` with `sensor=false` → `stl/4.3B-plain/` | USB-C, as above |
 
 Both cases hang on two screws 60 mm apart (a standard EU/DK wall box). The hanging screw sits at the same
 height above the case bottom on both, so **both desk stands fit both cases** without changes.
@@ -24,6 +25,7 @@ enclosure/
 ├── stl/
 │   ├── 5inch/   homeview5_front | _white | _black | _back | _testfit .stl
 │   ├── 4.3B/    homeview43_front | _white | _black | _back | _testfit .stl
+│   ├── 4.3B-plain/  homeview43plain_front | _back | _testfit .stl   (no sensor)
 │   └── stands/  desk_stand_fixed15 | desk_stand_tilt_base | _upright | _knob .stl
 └── images/      renders used in this README
 ```
@@ -65,6 +67,22 @@ Print either `…_front.stl` **or** the `…_white` + `…_black` pair, not both
   (Waveshare's drawing says 17.4; the measured value is what counts).
 - Depths measured with calipers (from the glass front): PCB back 10.5 · ESP32 module top 13.6 ·
   LCD back bottom-left 8.2 · LCD back bottom-right 4.9 · terminal block top 20.3 mm.
+
+## 4.3B plain case — no proximity sensor, hangs either way up
+
+![4.3B plain case: front, inside, back plate](images/case_43_plain.png)
+
+For displays without a VL53L0X. Same source file as the 4.3B case, exported with `-D 'sensor=false'`.
+
+- No sensor window or pillars. The bottom band of the bezel is 12 mm, the same as the top, so the case is
+  **symmetric**: 118.5 × 99.2 mm, 27.2 mm deep.
+- **Keyholes at both ends:** two pairs, 60 mm apart, with the slots pointing in opposite directions. It hangs
+  on the same two screws (wall or either desk stand) the right way up, or turned 180°. Turned round, the
+  USB-C cable comes out on the left; set the display rotation in ESPHome to match.
+- **Wall mounting:** the hanging screw sits **14 mm below the top edge** in either orientation (85.2 mm
+  above the bottom edge). On the desk stands, the case sits 14.6 mm higher than the sensor case.
+- Screen fit, USB-C opening, back-plate posts (with foam pads) and terminal-block pocket are identical to
+  the 4.3B case. It doesn't need to be black, since there is no sensor.
 
 ## Two-colour printing (Bambu H2D and other multi-material printers)
 
@@ -186,7 +204,7 @@ openscad -D 'PART="testfit"' -o ../stl/4.3B/homeview43_testfit.stl homeview43_wa
 ```
 
 `PART` values — cases: `front`, `white`, `black`, `back`, `testfit`, `sensortest`, `sensorinsert`,
-`assembly` (preview). Fixed stand: `stand`, `preview`. Tilt stand: `base`, `upright`, `knob`,
+`assembly` (preview). On the 4.3B, add `-D 'sensor=false'` for the plain case (`front`, `back`, `testfit`). Fixed stand: `stand`, `preview`. Tilt stand: `base`, `upright`, `knob`,
 `preview` (with `preview_tilt`), `check` (collision check at `check_tilt`).
 
 The variables you are most likely to touch:

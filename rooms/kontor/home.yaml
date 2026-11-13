@@ -176,6 +176,7 @@ lvgl:
                     pad_column: 8
                   widgets:
                     - label:
+                        id: kon_chip_music_icon
                         text: "\U000F075A"
                         text_font: hv_icons_sm
                         text_color: ${c_red}

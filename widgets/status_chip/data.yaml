@@ -2,6 +2,9 @@
 #  Widget data: Status chip — shows the state text of any HA entity
 #  vars: uid, entity
 #  (The HA package provides ready-formatted text sensors for this.)
+#  Open windows and doors are highlighted: when the text starts with
+#  "Vindue" and says "åben(t)" the icon turns red, "Dør ... åben" turns
+#  it blue. Any other text keeps the chip's own icon_color.
 # ---------------------------------------------------------------
 text_sensor:
   - platform: homeassistant
@@ -12,3 +15,15 @@ text_sensor:
       - lvgl.label.update:
           id: ${uid}_text
           text: !lambda 'return x;'
+      - lambda: |-
+          static bool have_default = false;
+          static lv_color_t default_color;
+          if (!have_default) {
+            default_color = lv_obj_get_style_text_color(id(${uid}_icon), LV_PART_MAIN);
+            have_default = true;
+          }
+          const bool open = x.find("åben") != std::string::npos;
+          lv_color_t c = default_color;
+          if (open && x.rfind("Vindue", 0) == 0) c = lv_color_hex(${c_red});
+          else if (open && x.rfind("Dør", 0) == 0) c = lv_color_hex(${c_blue});
+          lv_obj_set_style_text_color(id(${uid}_icon), c, LV_PART_MAIN);

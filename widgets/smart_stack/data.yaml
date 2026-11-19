@@ -24,10 +24,10 @@ script:
           id(${uid}_index) = idx;
           for (int i = 0; i < 3; i++) {
             if (i == idx) {
-              lv_obj_clear_flag(cards[i], LV_OBJ_FLAG_HIDDEN);
+              lv_obj_set_hidden(cards[i], false);
               lv_obj_fade_in(cards[i], 350, 0);
             } else {
-              lv_obj_add_flag(cards[i], LV_OBJ_FLAG_HIDDEN);
+              lv_obj_set_hidden(cards[i], true);
             }
             lv_obj_set_style_bg_opa(dots[i], i == idx ? LV_OPA_COVER : LV_OPA_40, LV_PART_MAIN);
           }

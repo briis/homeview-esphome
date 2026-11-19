@@ -22,7 +22,7 @@ binary_sensor:
     on_release:
       - lambda: |-
           id(${uid}_remind_at) = 0;
-          lv_obj_add_flag(id(${uid}_overlay), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_set_hidden(id(${uid}_overlay), true);
 
 script:
   - id: ${uid}_show
@@ -30,7 +30,7 @@ script:
       - script.execute: homeview_user_activity
       - lambda: |-
           id(${uid}_remind_at) = 0;
-          lv_obj_clear_flag(id(${uid}_overlay), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_set_hidden(id(${uid}_overlay), false);
           lv_obj_move_foreground(id(${uid}_overlay));
 
   - id: ${uid}_dismiss
@@ -38,7 +38,7 @@ script:
       - lambda: |-
           id(${uid}_remind_at) = millis() + ${remind_minutes} * 60000UL;
           if (id(${uid}_remind_at) == 0) id(${uid}_remind_at) = 1;
-          lv_obj_add_flag(id(${uid}_overlay), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_set_hidden(id(${uid}_overlay), true);
       - script.execute: homeview_user_activity
 
 interval:

@@ -34,8 +34,8 @@ image:
           id(${uid}_busy) = false;
           lv_image_set_src(id(${uid}_img), id(${uid}_small_img)->get_lv_image_dsc());
           lv_obj_invalidate(id(${uid}_img));
-          lv_obj_clear_flag(id(${uid}_img), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_add_flag(id(${uid}_placeholder), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_set_hidden(id(${uid}_img), false);
+          lv_obj_set_hidden(id(${uid}_placeholder), true);
     on_error:
       - lambda: |-
           id(${uid}_busy) = false;
@@ -53,8 +53,8 @@ image:
           id(${uid}_busy) = false;
           lv_image_set_src(id(${uid}_big), id(${uid}_big_img)->get_lv_image_dsc());
           lv_obj_invalidate(id(${uid}_big));
-          lv_obj_clear_flag(id(${uid}_big), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_add_flag(id(${uid}_big_placeholder), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_set_hidden(id(${uid}_big), false);
+          lv_obj_set_hidden(id(${uid}_big_placeholder), true);
     on_error:
       - lambda: |-
           id(${uid}_busy) = false;
@@ -136,7 +136,7 @@ script:
           auto t = id(hv_time).now();
           std::string sub = t.is_valid() ? (std::string(ringing ? "Ringede kl. " : "Kl. ") + t.strftime("%H:%M")) : std::string("");
           lv_label_set_text(id(${uid}_ov_time), sub.c_str());
-          lv_obj_clear_flag(id(${uid}_overlay), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_set_hidden(id(${uid}_overlay), false);
           lv_obj_move_foreground(id(${uid}_overlay));
       - script.execute:
           id: ${uid}_fetch
@@ -146,7 +146,7 @@ script:
     then:
       - lambda: |-
           id(${uid}_overlay_until) = 0;
-          lv_obj_add_flag(id(${uid}_overlay), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_set_hidden(id(${uid}_overlay), true);
       - script.execute: homeview_user_activity
 
   - id: ${uid}_ring

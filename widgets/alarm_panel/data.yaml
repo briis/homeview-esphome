@@ -124,11 +124,11 @@ script:
           const bool avail = !(state == "unavailable" || state == "unknown" || state.empty());
           // disarmed -> arm buttons; anything armed -> "Frakobl"
           if (l.armed) {
-            lv_obj_add_flag(id(${uid}_arm_row), LV_OBJ_FLAG_HIDDEN);
-            lv_obj_clear_flag(id(${uid}_disarm_btn), LV_OBJ_FLAG_HIDDEN);
+            lv_obj_set_hidden(id(${uid}_arm_row), true);
+            lv_obj_set_hidden(id(${uid}_disarm_btn), false);
           } else {
-            lv_obj_clear_flag(id(${uid}_arm_row), LV_OBJ_FLAG_HIDDEN);
-            lv_obj_add_flag(id(${uid}_disarm_btn), LV_OBJ_FLAG_HIDDEN);
+            lv_obj_set_hidden(id(${uid}_arm_row), false);
+            lv_obj_set_hidden(id(${uid}_disarm_btn), true);
           }
           set_keys(id(${uid}_arm_row), !avail);
           lv_obj_set_style_opa(id(${uid}_arm_row), avail ? LV_OPA_COVER : LV_OPA_50, LV_PART_MAIN);
@@ -175,14 +175,14 @@ script:
           lv_label_set_text(id(${uid}_cf_sub), night
               ? "Alarmen slås til i nattilstand."
               : "Hele huset sikres. Du har ${exit_seconds} sekunder til at gå ud.");
-          lv_obj_clear_flag(id(${uid}_confirm_dlg), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_set_hidden(id(${uid}_confirm_dlg), false);
           lv_obj_move_foreground(id(${uid}_confirm_dlg));
 
   - id: ${uid}_confirm_yes
     then:
       - lambda: |-
           id(${uid}_confirm_at) = 0;
-          lv_obj_add_flag(id(${uid}_confirm_dlg), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_set_hidden(id(${uid}_confirm_dlg), true);
       - script.execute:
           id: ${uid}_arm
           command: !lambda 'return id(${uid}_confirm_cmd);'
@@ -192,7 +192,7 @@ script:
       - lambda: |-
           id(${uid}_confirm_at) = 0;
           id(${uid}_confirm_cmd).clear();
-          lv_obj_add_flag(id(${uid}_confirm_dlg), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_set_hidden(id(${uid}_confirm_dlg), true);
       - script.execute: homeview_user_activity
 
   - id: ${uid}_kp_show
@@ -207,7 +207,7 @@ script:
             lv_label_set_text(id(${uid}_kp_msg), "Indtast kode");
             lv_obj_set_style_text_color(id(${uid}_kp_msg), lv_color_hex(${c_label_2}), LV_PART_MAIN);
           }
-          lv_obj_clear_flag(id(${uid}_keypad), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_set_hidden(id(${uid}_keypad), false);
           lv_obj_move_foreground(id(${uid}_keypad));
 
   - id: ${uid}_kp_hide
@@ -217,7 +217,7 @@ script:
           id(${uid}_pin).clear();
           id(${uid}_sent_at) = 0;
           lv_label_set_text(id(${uid}_kp_dots), "");
-          lv_obj_add_flag(id(${uid}_keypad), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_set_hidden(id(${uid}_keypad), true);
       - script.execute: homeview_user_activity
 
   # key: "0".."9", "del", "ok"

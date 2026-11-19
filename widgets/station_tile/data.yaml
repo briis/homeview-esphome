@@ -37,10 +37,10 @@ script:
                               (ch.rfind(src, 0) == 0 || src.rfind(ch, 0) == 0);
           if (active) {
             lv_obj_add_state(id(${uid}), LV_STATE_CHECKED);
-            lv_obj_clear_flag(id(${uid}_badge), LV_OBJ_FLAG_HIDDEN);
+            lv_obj_set_hidden(id(${uid}_badge), false);
           } else {
             lv_obj_clear_state(id(${uid}), LV_STATE_CHECKED);
-            lv_obj_add_flag(id(${uid}_badge), LV_OBJ_FLAG_HIDDEN);
+            lv_obj_set_hidden(id(${uid}_badge), true);
           }
 
   - id: ${uid}_tap

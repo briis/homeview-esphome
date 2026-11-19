@@ -108,9 +108,9 @@ esphome:
           id(stue_light3_ha).publish_state("on");
           // demo snapshot instead of a download
           lv_image_set_src(id(stue_cam_img), id(demo_cam_small)->get_lv_image_dsc());
-          lv_obj_clear_flag(id(stue_cam_img), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_set_hidden(id(stue_cam_img), false);
           lv_image_set_src(id(stue_cam_big), id(demo_cam_big)->get_lv_image_dsc());
-          lv_obj_clear_flag(id(stue_cam_big), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_set_hidden(id(stue_cam_big), false);
       - delay: 2500ms
       - if:
           condition:

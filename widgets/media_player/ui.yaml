@@ -1,7 +1,8 @@
 # ---------------------------------------------------------------
 #  Widget: Now Playing (Apple Music / Control Center style)
 #  Artwork, title, artist, transport controls, live volume slider and a
-#  radio button that opens a station page.
+#  radio button that opens a station page, and a shuffle toggle (hidden
+#  for radio streams).
 #  vars: uid, x, y, width, height, radio_page
 #  Pair with widgets/media_player/data.yaml (same uid).
 # ---------------------------------------------------------------
@@ -62,6 +63,29 @@ obj:
               text: "\U000F0439"
               text_font: hv_icons_md
               text_color: ${c_red}
+
+    # ---------- Shuffle (music only; data.yaml shows/hides it) ----------
+    - button:
+        id: ${uid}_shuffle_btn
+        align: TOP_RIGHT
+        y: 54
+        width: 44
+        height: 44
+        radius: 22
+        bg_color: ${c_platter_2}
+        bg_opa: COVER
+        hidden: true
+        pressed:
+          bg_color: 0x48484A
+        on_click:
+          - script.execute: ${uid}_toggle_shuffle
+        widgets:
+          - label:
+              id: ${uid}_shuffle_icon
+              align: CENTER
+              text: "\U000F049D"
+              text_font: hv_icons_md
+              text_color: ${c_label_2}
 
     # ---------- Text ----------
     - obj:

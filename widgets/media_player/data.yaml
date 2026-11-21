@@ -251,6 +251,10 @@ image:
             - lvgl.widget.show: ${uid}_art_placeholder
 
 globals:
+  # Shuffle state as last reported by HA (or set optimistically on tap)
+  - id: ${uid}_shuffle_on
+    type: bool
+    initial_value: "false"
   # camera_proxy path of an HA camera that shows the current cover
   # (art_camera.yaml). Empty = fetch covers straight from the media proxy.
   - id: ${uid}_art_cam_pic
@@ -283,6 +287,7 @@ text_sensor:
           lv_label_set_text(id(${uid}_caption), cap);
           lv_obj_set_style_text_color(id(${uid}_caption),
               lv_color_hex(playing ? ${c_red} : ${c_label_2}), LV_PART_MAIN);
+      - script.execute: ${uid}_shuffle_render
 
   - platform: homeassistant
     id: ${uid}_title_ha
@@ -308,6 +313,17 @@ text_sensor:
     on_value:
       - script.execute: ${uid}_render_text
       - script.execute: ${uid}_art_select
+      - script.execute: ${uid}_shuffle_render
+
+  # Shuffle (Sonos always reports it, also for radio)
+  - platform: homeassistant
+    id: ${uid}_shuffle_ha
+    entity_id: ${entity}
+    attribute: shuffle
+    internal: true
+    on_value:
+      - lambda: 'id(${uid}_shuffle_on) = (x == "True" || x == "true" || x == "on");'
+      - script.execute: ${uid}_shuffle_render
 
   - platform: homeassistant
     id: ${uid}_picture_ha
@@ -427,6 +443,35 @@ script:
           if (bad(artist)) artist = (!bad(channel) && channel != title) ? channel : std::string("");
           lv_label_set_text(id(${uid}_title), title.c_str());
           lv_label_set_text(id(${uid}_artist), artist.c_str());
+
+  # Shuffle button: only for music (no radio channel) that is playing or
+  # paused; red icon when shuffle is on.
+  - id: ${uid}_shuffle_render
+    then:
+      - lambda: |-
+          const std::string &st = id(${uid}_state_ha).state;
+          std::string ch = id(${uid}_channel_ha).state;
+          if (ch == "None" || ch == "unknown" || ch == "unavailable") ch.clear();
+          const bool show = (st == "playing" || st == "paused") && ch.empty();
+          lv_obj_set_hidden(id(${uid}_shuffle_btn), !show);
+          const bool on = id(${uid}_shuffle_on);
+          lv_obj_set_style_text_color(id(${uid}_shuffle_icon),
+              lv_color_hex(on ? ${c_red} : ${c_label_2}), LV_PART_MAIN);
+          lv_obj_set_style_bg_color(id(${uid}_shuffle_btn),
+              lv_color_hex(on ? 0x3A2A2A : ${c_platter_2}), LV_PART_MAIN);
+
+  - id: ${uid}_toggle_shuffle
+    then:
+      - lambda: 'id(${uid}_shuffle_on) = !id(${uid}_shuffle_on);'
+      - script.execute: ${uid}_shuffle_render
+      - homeassistant.action:
+          action: media_player.shuffle_set
+          data:
+            entity_id: ${entity}
+          data_template:
+            shuffle: "{{ on }}"
+          variables:
+            on: !lambda 'return id(${uid}_shuffle_on) ? "true" : "false";'
 
   - id: ${uid}_play_pause
     then:

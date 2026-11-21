@@ -65,7 +65,7 @@ esphome:
   name: ${device_name}
   # Only needed where the PlatformIO registry is unreachable; harmless otherwise
   libraries:
-    - "lvgl/lvgl=https://github.com/lvgl/lvgl.git#v9.5.0"
+    - "lvgl/lvgl=https://github.com/lvgl/lvgl.git#v9.6.0"
   on_boot:
     priority: -100
     then:
